@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor'
+import Lexer from './Lexer'
 
 self.MonacoEnvironment = {
   getWorkerUrl: function(moduleId, label) {
@@ -18,24 +19,33 @@ self.MonacoEnvironment = {
   },
 }
 
-const editor = monaco.editor.create(document.getElementById('editor'), {
-  value: `#include <stdio.h>
-  int main() {
-  int a = 1;
+const source = monaco.editor.createModel(
+  `#include <stdio.h>
+int main() {
+  int a=1,b=2,c='3';
+  if(a>=b)printf("%d",a);
+  else printf("%d",b);
   return 0;
 }`,
-  language: 'c',
+  'c',
+)
+
+const output = monaco.editor.createModel('')
+
+monaco.editor.create(document.getElementById('editor'), {
+  model: source,
 })
 
-const output = monaco.editor.create(document.getElementById('result'), {
-  value: `#include <stdio.h>
-  int main() {
-  int a = 1;
-  return 0;
-}`,
-  language: 'c',
+monaco.editor.create(document.getElementById('result'), {
+  model: output,
 })
 
-editor.getModel().onDidChangeContent(function() {
-  output.setValue(editor.getModel().getValue())
+source.onDidChangeContent(function() {
+  parse()
 })
+
+function parse() {
+  output.setValue(new Lexer(source.getValue()).output())
+}
+
+parse()
