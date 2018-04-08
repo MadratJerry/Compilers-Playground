@@ -1,185 +1,118 @@
-import Token from './Token'
+const STATE = {
+  identifier: 0,
+  number: 1,
+  operator: 2,
+  string: 3,
+  commentOrOperator: 4,
+  character: 5,
+  symbol: 6,
+  ignore: 7,
+}
+
+const dispatchMap = (() => {
+  const map = new Map()
+
+  for (let i = 'a'.charCodeAt(0); i <= 'z'.charCodeAt(0); i++) map[String.fromCharCode(i)] = STATE.identifier
+  for (let i = 'A'.charCodeAt(0); i <= 'Z'.charCodeAt(0); i++) map[String.fromCharCode(i)] = STATE.identifier
+  for (const i of '$_') map[i] = STATE.identifier
+  for (let i = '0'.charCodeAt(0); i <= '9'.charCodeAt(0); i++) map[String.fromCharCode(i)] = STATE.identifier
+  for (const i of '<>=!~?:&|+-*^%') map[i] = STATE.operator
+  for (const i of '/') map[i] = STATE.commentOrOperator
+  for (const i of '"') map[i] = STATE.string
+  for (const i of "'") map[i] = STATE.character
+  for (const i of '#.(){},;') map[i] = STATE.symbol
+  for (const i of ' \n') map[i] = STATE.ignore
+  return map
+})()
 
 /**
- * The lexer
+ * The Lexer
  * @class Lexer
  */
 class Lexer {
   /**
    * Creates an instance of Lexer.
-   * @param {String} text
+   * @param {String} input
    * @memberof Lexer
    */
-  constructor(text) {
-    this.text = text
-    this.tokenList = []
-    this.parse()
+  constructor(input = '') {
+    this.input = input
+    this.nextChar = this.charGenerater()
+    this.generateFnMap()
+    this.analyze()
   }
 
   /**
-   * Parse the text
+   * Generate lexical function map
+   * @memberof Lexer
    */
-  parse() {
-    this.text.split('\n').map((line, index) => {
-      this.line = line
-      for (let i = 0, j, k, len = line.length; i < len; ) {
-        ;[i, j, k] = this.dispatcher(i)
-        if (k !== null) {
-          const token = new Token(index, i, k)
-          this.tokenList.push(token)
-        }
-        i = i + j
-      }
-    })
+  generateFnMap() {
+    this.fnMap = new Map()
+    for (const key in STATE) {
+      this.fnMap[STATE[key]] = this[key]
+    }
   }
 
+  identifier() {}
+
+  number() {}
+
+  operator() {}
+
+  string() {}
+
+  commentOrOperator() {}
+
+  character() {}
+
+  symbol() {}
+
+  ignore() {}
+
   /**
-   * The dispatcher
-   * @param {Number} i
-   * @returns {Number}
+   * Lexical analyze
+   * @memberof Lexer
    */
-  dispatcher(i) {
-    const c = this.line.charAt(i)
-    if (c == ' ') return [i, 1, null]
-    if ('#'.indexOf(c) != -1) return [i, 1, c]
-    if (c == '"') return this.identifyString(i)
-    if (c == "'") return this.identifyChar(i)
-    if (Lexer.isDigit(c)) return this.identifyDigit(i)
-    if (Lexer.isLetter(c)) return this.identifyWord(i)
-    if ('><=!'.indexOf(c) != -1) return this.identifySymbol(i)
-    return [i, 1, c]
-  }
+  analyze() {
+    const { nextChar } = this
 
-  identifyChar(l) {
-    let r = l,
-      c,
-      state = 0
-    while (state < 2) {
-      switch (state) {
-        case 0:
-          r += 2
-          state = 1
-          break
-        case 1:
-          c = this.line.charAt(r++)
-          if (c == "'") {
-            state = 2
-            r++
-          } else state = 3
-          break
-      }
+    while (1) {
+      const { value: char, done } = nextChar.next()
+      if (done) break
+      const { c } = char
+      this.dispatch(c)
     }
-
-    if (state == 3) return [l, 1, "'"]
-    else return [l, r - l - 1, this.line.substring(l, r - 1)]
-  }
-
-  identifySymbol(l) {
-    let r = l,
-      c,
-      state = 0
-    let count = 0
-    while (state < 2) {
-      if (count++ > 10) break
-      switch (state) {
-        case 0:
-          r++
-          state = 1
-          break
-        case 1:
-          c = this.line.charAt(r++)
-          if (c == '=') {
-            state = 2
-            r++
-          } else state = 3
-          break
-      }
-    }
-    return [l, r - l - 1, this.line.substring(l, r - 1)]
-  }
-
-  identifyString(l) {
-    let r = l,
-      c,
-      state = 0
-    while (state < 2) {
-      switch (state) {
-        case 0:
-          c = this.line.charAt(r++)
-          if (c == '"') state = 1
-          else state = 2
-          break
-        case 1:
-          c = this.line.charAt(r++)
-          if (c == '"') {
-            state = 2
-            r++
-          } else if (c == '') state = 3
-          else state = 1
-          break
-      }
-    }
-
-    if (state == 3) return [l, 1, '"']
-    else return [l, r - l - 1, this.line.substring(l, r - 1)]
-  }
-
-  identifyWord(l) {
-    let r = l,
-      c,
-      state = 0
-    while (state != 1) {
-      switch (state) {
-        case 0:
-          c = this.line.charAt(r++)
-          if (Lexer.isLetter(c)) state = 0
-          else state = 1
-          break
-      }
-    }
-    return [l, r - l - 1, this.line.substring(l, r - 1)]
-  }
-
-  identifyDigit(l) {
-    let r = l,
-      c,
-      state = 0
-    while (state != 1) {
-      switch (state) {
-        case 0:
-          c = this.line.charAt(r++)
-          if (Lexer.isDigit(c)) state = 0
-          else state = 1
-          break
-      }
-    }
-    return [l, r - l - 1, this.line.substring(l, r - 1)]
   }
 
   /**
-   * Whether a letter
-   * @static
+   * Dispatch initial state
    * @param {String} c
-   * @returns {Boolean}
    * @memberof Lexer
    */
-  static isLetter(c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-  }
-
-  /**
-   * Whether a digit
-   * @static
-   * @param {String} c
-   * @returns {Boolean}
-   * @memberof Lexer
-   */
-  static isDigit(c) {
-    return c >= '0' && c <= '9'
+  dispatch(c) {
+    const { fnMap } = this
+    fnMap[dispatchMap[c]]()
   }
 
   output() {
-    return this.tokenList.map(t => t.toString()).join('\n')
+    return ''
+  }
+
+  /**
+   * Char iterator
+   * @memberof Lexer
+   */
+  *charGenerater() {
+    let row = 0,
+      column = 0
+    for (const i of this.input) {
+      if (i === '\n') {
+        row++
+        column = 0
+      }
+      yield { c: i, row, column }
+      column++
+    }
   }
 }
 
