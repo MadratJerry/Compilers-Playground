@@ -20,14 +20,11 @@ self.MonacoEnvironment = {
 }
 
 const source = monaco.editor.createModel(
-  `#include <stdio.h>
-int main() {
-  int a=1,b=2,c='3';
-  if(a>=b)printf("%d",a);
-  else printf("%d",b);
-  return 0;
+  `function name() {
+  const a = 1e2
+  let b = 1.234e10
 }`,
-  'c',
+  'javascript',
 )
 
 const output = monaco.editor.createModel('')
