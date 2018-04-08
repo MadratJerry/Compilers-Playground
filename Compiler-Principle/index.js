@@ -20,10 +20,13 @@ self.MonacoEnvironment = {
 }
 
 const source = monaco.editor.createModel(
-  `function name() {
+  `(function name() {
   const a = 1e2
   let b = 1.234e10
-}`,
+  var f = "foo\\
+  bar\\n";const g='a111e\\n\\
+  11';;;
+})()`,
   'javascript',
 )
 

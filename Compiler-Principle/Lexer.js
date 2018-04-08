@@ -6,15 +6,23 @@ const STATE = {
   operator: 2,
   string: 3,
   commentOrOperator: 4,
-  character: 5,
-  symbol: 6,
-  ignore: 7,
+  symbol: 5,
+  ignore: 6,
 }
 
 const ERROR = {
   INVALID: 'Invalid charactor',
   UNEXPECTED: 'Unexpected token',
 }
+
+const errorMap = (() => {
+  const map = new Map()
+  map['INVALID'] = 'Invalid charactor'
+  map['UNEXPECTED'] = 'Unexpected token'
+  map['UNTERMINATED'] = 'Unterminated string literal'
+  map['ENDFILE'] = 'End of file'
+  return map
+})()
 
 const dispatchMap = (() => {
   const map = new Map()
@@ -25,8 +33,7 @@ const dispatchMap = (() => {
   for (let i = '0'.charCodeAt(0); i <= '9'.charCodeAt(0); i++) map[String.fromCharCode(i)] = STATE.number
   for (const i of '<>=!~?:&|+-*^%') map[i] = STATE.operator
   for (const i of '/') map[i] = STATE.commentOrOperator
-  for (const i of '"') map[i] = STATE.string
-  for (const i of "'") map[i] = STATE.character
+  for (const i of `"'`) map[i] = STATE.string
   for (const i of '#.(){},;') map[i] = STATE.symbol
   for (const i of ' \n') map[i] = STATE.ignore
   return map
@@ -45,6 +52,8 @@ class Lexer {
   constructor(input = '') {
     this.input = input.split('\n').map(line => line + '\n')
     this.nextChar = this.charGenerater()
+    this.tokenList = []
+    this.errorList = []
     this.generateFnMap()
     this.analyze()
   }
@@ -69,45 +78,81 @@ class Lexer {
     if (l.row === r.row) {
       return this.input[l.row].substring(l.column, r.column)
     } else {
-      let str = this.input[l.row]
+      let str = this.input[l.row].substr(l.column)
       for (let i = l.row + 1; i < r.row; i++) str += this.input[i]
-      str += this.input[r.row]
+      str += this.input[r.row].substring(0, r.column)
       return str
     }
   }
 
   identifier() {
-    let count = 0
     let state = 0
     let l = Lexer.getCopy(this.next.value)
     while (state < 1) {
-      if (count++ > 16) return
       switch (state) {
-        case 0:
-          this.next = this.nextChar.next()
-          const { value } = this.next
+        case 0: {
+          const { value } = this.getNext()
           if (dispatchMap[value.c] === STATE.identifier) state = 0
           else state = 1
           break
+        }
       }
     }
-    return { ok: true, value: new Token(this.getString(l, this.next.value), l.row, l.column) }
+    return new Token(this.getString(l, this.next.value), l.row, l.column)
   }
 
   number() {}
 
   operator() {}
 
-  string() {}
+  string() {
+    let state = 0
+    let l = Lexer.getCopy(this.next.value)
+    const endState = 5
+    while (state < endState) {
+      switch (state) {
+        case 0: {
+          if (l.c === '"') state = 1
+          else state = 2
+          break
+        }
+        case 1: {
+          const { value } = this.getNext()
+          if (value.c === '"') state = endState
+          else if (value.c === '\n') throw this.error('UNTERMINATED')
+          else if (value.c === '\\') state = 3
+          break
+        }
+        case 2: {
+          const { value } = this.getNext()
+          if (value.c === "'") state = endState
+          else if (value.c === '\n') throw this.error('UNTERMINATED')
+          else if (value.c === '\\') state = 4
+          break
+        }
+        case 3: {
+          const { value } = this.getNext()
+          if (value.c === '"') throw this.error('UNTERMINATED')
+          else state = 1
+          break
+        }
+        case 4: {
+          const { value } = this.getNext()
+          if (value.c === '"') throw this.error('UNTERMINATED')
+          else state = 2
+          break
+        }
+      }
+    }
+    if (state === endState) this.getNext()
+    return new Token(this.getString(l, this.next.value), l.row, l.column)
+  }
 
   commentOrOperator() {}
 
-  character() {}
-
   symbol() {
     let l = Lexer.getCopy(this.next.value)
-    this.next = this.nextChar.next()
-    return { ok: true, value: new Token(this.getString(l, this.next.value), l.row, l.column) }
+    return new Token(this.getString(l, this.getNext().value), l.row, l.column)
   }
 
   ignore() {}
@@ -117,15 +162,23 @@ class Lexer {
    * @memberof Lexer
    */
   analyze() {
-    const { nextChar } = this
-
-    this.next = nextChar.next()
+    this.getNext()
     while (1) {
       const { value, done } = this.next
       if (done) break
-      const result = this.dispatch(value)
-      console.log(result)
-      if (!result) this.next = nextChar.next()
+      try {
+        const result = this.dispatch(value)
+        console.log(result)
+        if (!result) this.getNext()
+      } catch (e) {
+        if (errorMap[e.name]) {
+          if (e.name === 'ENDFILE') break
+          else {
+            this.errorList.push({ error: e, char: Lexer.getCopy(this.next) })
+            this.getNext()
+          }
+        } else throw e
+      }
     }
   }
 
@@ -139,14 +192,36 @@ class Lexer {
     const { c } = char
     const state = dispatchMap[c]
     console.log(`dispatch ${state}`)
-    if (state === undefined) return { ok: false, value: { error: ERROR.INVALID, char } }
+    if (state === undefined) throw this.error('INVALID')
     else return fnMap[state]()
+  }
+
+  /**
+   * Throw an error
+   * @param {String} name
+   * @memberof Lexer
+   */
+  error(name) {
+    const error = new Error()
+    error.name = name
+    error.message = errorMap[name]
+    return error
   }
 
   output() {
     return ''
   }
 
+  /**
+   * Get the next char
+   * @returns {Object}
+   * @memberof Lexer
+   */
+  getNext() {
+    this.next = this.nextChar.next()
+    if (this.next.done) throw this.error('ENDFILE')
+    return this.next
+  }
   /**
    * Char iterator
    * @memberof Lexer
