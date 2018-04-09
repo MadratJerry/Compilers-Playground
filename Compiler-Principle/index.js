@@ -22,7 +22,10 @@ self.MonacoEnvironment = {
 
 const source = monaco.editor.createModel(
   `(function name() {
-  const a = 1e2
+  let x = 1 / 2;x/=3;
+  const /*inline \\\\/\/** *
+  ****comment*/a = 1e2
+  //One Line Comment//\\
   let b = 1.234e10
   var f = "foo\\
   bar\\n";const g='a111e\\n\\

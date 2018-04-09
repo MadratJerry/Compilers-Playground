@@ -18,6 +18,7 @@ const errorMap = (() => {
   map['ENDFILE'] = 'End of file'
   return map
 })()
+
 const dispatchMap = (() => {
   const map = new Map()
 
@@ -150,7 +151,47 @@ class Lexer {
     return new Token(this.getString(l, this.next.value), l, this.next.value)
   }
 
-  commentOrOperator() {}
+  commentOrOperator() {
+    let state = 0
+    let l = Lexer.getCopy(this.next.value)
+    const endState = 5
+    while (state < endState) {
+      switch (state) {
+        case 0: {
+          const { value } = this.getNext()
+          if (value.c === '*') state = 1
+          else if (value.c === '/') state = 2
+          else if (value.c === '=') state = 3
+          else state = endState
+          break
+        }
+        case 1: {
+          const { value } = this.getNext()
+          if (value.c === '*') state = 4
+          else state = 1
+          break
+        }
+        case 2: {
+          const { value } = this.getNext()
+          if (value.c === '\n') state = endState
+          break
+        }
+        case 3: {
+          this.getNext()
+          state = endState
+          break
+        }
+        case 4: {
+          const { value } = this.getNext()
+          if (value.c === '/') {
+            this.getNext()
+            state = endState
+          } else state = 1
+        }
+      }
+    }
+    return new Token(this.getString(l, this.next.value), l, this.next.value)
+  }
 
   symbol() {
     let l = Lexer.getCopy(this.next.value)
