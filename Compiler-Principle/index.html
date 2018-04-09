@@ -19,13 +19,27 @@
       display: flex;
       justify-content: space-between;
     }
+
+    #result span {
+      display: inline-block;
+      width: 200px;
+    }
+
+
+    #result .string {
+      color: #a31515;
+    }
+
+    #result .error {
+      color: red;
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <div id="editor" style="width:50%;border:1px solid grey"></div>
-    <div id="result" style="width:50%;border:1px solid grey"></div>
+    <div id="result" style="width:50%;border:1px solid grey; overflow: scroll;"></div>
   </div>
 </body>
 

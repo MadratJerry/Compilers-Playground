@@ -26,18 +26,13 @@ const source = monaco.editor.createModel(
   var f = "foo\\
   bar\\n";const g='a111e\\n\\
   11';;;
+  if(a>=b)console.log("wow");
 })()`,
   'javascript',
 )
 
-const output = monaco.editor.createModel('')
-
 monaco.editor.create(document.getElementById('editor'), {
   model: source,
-})
-
-monaco.editor.create(document.getElementById('result'), {
-  model: output,
 })
 
 source.onDidChangeContent(function() {
@@ -45,7 +40,23 @@ source.onDidChangeContent(function() {
 })
 
 function parse() {
-  output.setValue(new Lexer(source.getValue()).output())
+  render(new Lexer(source.getValue()))
+}
+
+function render(lexer) {
+  const result = document.getElementById('result')
+  const { tokenList, errorList } = lexer
+  result.innerHTML = `<ul>
+  ${tokenList
+    .map(t => `<li>Token: <span class="string">${t.token}</span> Row: ${t.row} Column: ${t.column}</li>`)
+    .join('')}
+  ${errorList
+    .map(
+      ({ error, char: { row, column } }) =>
+        `<li class="error">Error: <span>${error.message}</span> Row: ${row} Column: ${column}</li>`,
+    )
+    .join('')}
+  </ul>`
 }
 
 parse()

@@ -1,4 +1,4 @@
-import Token from './Token'
+import Token, { tokenizer } from './Token'
 
 const STATE = {
   identifier: 0,
@@ -23,7 +23,6 @@ const errorMap = (() => {
   map['ENDFILE'] = 'End of file'
   return map
 })()
-
 const dispatchMap = (() => {
   const map = new Map()
 
@@ -76,11 +75,11 @@ class Lexer {
    */
   getString(l, r) {
     if (l.row === r.row) {
-      return this.input[l.row].substring(l.column, r.column)
+      return this.input[l.row - 1].substring(l.column, r.column)
     } else {
-      let str = this.input[l.row].substr(l.column)
-      for (let i = l.row + 1; i < r.row; i++) str += this.input[i]
-      str += this.input[r.row].substring(0, r.column)
+      let str = this.input[l.row - 1].substr(l.column)
+      for (let i = l.row; i < r.row - 1; i++) str += this.input[i]
+      str += this.input[r.row - 1].substring(0, r.column)
       return str
     }
   }
@@ -103,7 +102,15 @@ class Lexer {
 
   number() {}
 
-  operator() {}
+  operator() {
+    let l = Lexer.getCopy(this.next.value)
+    const { value } = this.getNext()
+    if (dispatchMap[value.c] === STATE.operator) {
+      if (tokenizer.operators.includes(this.getString(l, { row: l.row, column: l.column + 2 })))
+        return new Token(this.getString(l, this.getNext().value), l.row, l.column)
+      else throw this.error('UNEXPECTED')
+    } else return new Token(this.getString(l, this.next.value), l.row, l.column)
+  }
 
   string() {
     let state = 0
@@ -132,13 +139,13 @@ class Lexer {
         }
         case 3: {
           const { value } = this.getNext()
-          if (value.c === '"') throw this.error('UNTERMINATED')
+          if (value.c === ' ') throw this.error('UNTERMINATED')
           else state = 1
           break
         }
         case 4: {
           const { value } = this.getNext()
-          if (value.c === '"') throw this.error('UNTERMINATED')
+          if (value.c === ' ') throw this.error('UNTERMINATED')
           else state = 2
           break
         }
@@ -170,11 +177,12 @@ class Lexer {
         const result = this.dispatch(value)
         console.log(result)
         if (!result) this.getNext()
+        else this.tokenList.push(result)
       } catch (e) {
         if (errorMap[e.name]) {
           if (e.name === 'ENDFILE') break
           else {
-            this.errorList.push({ error: e, char: Lexer.getCopy(this.next) })
+            this.errorList.push({ error: e, char: Lexer.getCopy(this.next.value) })
             this.getNext()
           }
         } else throw e
@@ -208,10 +216,6 @@ class Lexer {
     return error
   }
 
-  output() {
-    return ''
-  }
-
   /**
    * Get the next char
    * @returns {Object}
@@ -230,12 +234,12 @@ class Lexer {
     let row = 0,
       column = 0
     for (const line of this.input) {
+      row++
       column = 0
       for (const i of line) {
         yield { c: i, row, column }
         column++
       }
-      row++
     }
   }
 
