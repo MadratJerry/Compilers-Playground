@@ -10,11 +10,6 @@ const STATE = {
   ignore: 6,
 }
 
-const ERROR = {
-  INVALID: 'Invalid charactor',
-  UNEXPECTED: 'Unexpected token',
-}
-
 const errorMap = (() => {
   const map = new Map()
   map['INVALID'] = 'Invalid charactor'
@@ -75,11 +70,11 @@ class Lexer {
    */
   getString(l, r) {
     if (l.row === r.row) {
-      return this.input[l.row - 1].substring(l.column, r.column)
+      return this.input[l.row - 1].substring(l.column - 1, r.column - 1)
     } else {
-      let str = this.input[l.row - 1].substr(l.column)
+      let str = this.input[l.row - 1].substr(l.column - 1)
       for (let i = l.row; i < r.row - 1; i++) str += this.input[i]
-      str += this.input[r.row - 1].substring(0, r.column)
+      str += this.input[r.row - 1].substring(0, r.column - 1)
       return str
     }
   }
@@ -97,7 +92,7 @@ class Lexer {
         }
       }
     }
-    return new Token(this.getString(l, this.next.value), l.row, l.column)
+    return new Token(this.getString(l, this.next.value), l, this.next.value)
   }
 
   number() {}
@@ -107,9 +102,9 @@ class Lexer {
     const { value } = this.getNext()
     if (dispatchMap[value.c] === STATE.operator) {
       if (tokenizer.operators.includes(this.getString(l, { row: l.row, column: l.column + 2 })))
-        return new Token(this.getString(l, this.getNext().value), l.row, l.column)
+        return new Token(this.getString(l, this.getNext().value), l, this.next.value)
       else throw this.error('UNEXPECTED')
-    } else return new Token(this.getString(l, this.next.value), l.row, l.column)
+    } else return new Token(this.getString(l, this.next.value), l, this.next.value)
   }
 
   string() {
@@ -152,14 +147,14 @@ class Lexer {
       }
     }
     if (state === endState) this.getNext()
-    return new Token(this.getString(l, this.next.value), l.row, l.column)
+    return new Token(this.getString(l, this.next.value), l, this.next.value)
   }
 
   commentOrOperator() {}
 
   symbol() {
     let l = Lexer.getCopy(this.next.value)
-    return new Token(this.getString(l, this.getNext().value), l.row, l.column)
+    return new Token(this.getString(l, this.getNext().value), l, this.next.value)
   }
 
   ignore() {}
@@ -236,10 +231,7 @@ class Lexer {
     for (const line of this.input) {
       row++
       column = 0
-      for (const i of line) {
-        yield { c: i, row, column }
-        column++
-      }
+      for (const i of line) yield { c: i, row, column: ++column }
     }
   }
 

@@ -1,3 +1,4 @@
+import './eventDelegate'
 import * as monaco from 'monaco-editor'
 import Lexer from './Lexer'
 
@@ -31,7 +32,7 @@ const source = monaco.editor.createModel(
   'javascript',
 )
 
-monaco.editor.create(document.getElementById('editor'), {
+const editor = monaco.editor.create(document.getElementById('editor'), {
   model: source,
 })
 
@@ -43,12 +44,31 @@ function parse() {
   render(new Lexer(source.getValue()))
 }
 
+let decoration = []
 function render(lexer) {
   const result = document.getElementById('result')
+  const div = document.createElement('div')
+  div.addEventDelegate('mouseover', 'li', e => {
+    const lr = parseInt(e.currentTarget.dataset.lr)
+    const lc = parseInt(e.currentTarget.dataset.lc)
+    const rr = parseInt(e.currentTarget.dataset.rr)
+    const rc = parseInt(e.currentTarget.dataset.rc)
+    decoration = editor.deltaDecorations(decoration, [
+      {
+        range: new monaco.Range(lr, lc, rr, rc),
+        options: { inlineClassName: 'myInlineDecoration' },
+      },
+    ])
+  })
   const { tokenList, errorList } = lexer
-  result.innerHTML = `<ul>
+  div.innerHTML = `<ul>
   ${tokenList
-    .map(t => `<li>Token: <span class="string">${t.token}</span> Row: ${t.row} Column: ${t.column}</li>`)
+    .map(
+      t =>
+        `<li data-lr=${t.l.row} data-lc=${t.l.column} data-rr=${t.r.row} data-rc=${
+          t.r.column
+        }>Token: <span class="string">${t.token}</span> Row: ${t.l.row} Column: ${t.l.column}</li>`,
+    )
     .join('')}
   ${errorList
     .map(
@@ -57,6 +77,8 @@ function render(lexer) {
     )
     .join('')}
   </ul>`
+  result.innerHTML = ''
+  result.appendChild(div)
 }
 
 parse()

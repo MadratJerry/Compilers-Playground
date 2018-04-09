@@ -44,14 +44,14 @@ class Token {
   /**
    * Creates an instance of Token.
    * @param {String} token
-   * @param {Number} row
-   * @param {Number} column
+   * @param {Object} l
+   * @param {Object} r
    * @memberof Token
    */
-  constructor(token, row, column) {
+  constructor(token, l, r) {
     this.token = token
-    this.row = row
-    this.column = column
+    this.l = l
+    this.r = r
   }
 }
 
