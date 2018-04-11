@@ -2,6 +2,8 @@ import './eventDelegate'
 import * as monaco from 'monaco-editor'
 import Lexer from './Lexer'
 
+const html = String.raw
+
 self.MonacoEnvironment = {
   getWorkerUrl: function(moduleId, label) {
     if (label === 'json') {
@@ -68,7 +70,8 @@ function render(lexer) {
   ${tokenList
     .map(
       t =>
-        `<li data-lr=${t.l.row} data-lc=${t.l.column} data-rr=${t.r.row} data-rc=${
+        html`
+        <li data-lr=${t.l.row} data-lc=${t.l.column} data-rr=${t.r.row} data-rc=${
           t.r.column
         }>Token: <span class="string">${t.token}</span> Row: ${t.l.row} Column: ${t.l.column}</li>`,
     )
@@ -76,7 +79,9 @@ function render(lexer) {
   ${errorList
     .map(
       ({ error, char: { row, column } }) =>
-        `<li class="error">Error: <span>${error.message}</span> Row: ${row} Column: ${column}</li>`,
+        html`<li data-lr=${row} data-lc=${column} data-rr=${row} data-rc=${column} class="error">Error: <span>${
+          error.message
+        }</span> Row: ${row} Column: ${column}</li>`,
     )
     .join('')}
   </ul>`

@@ -96,7 +96,44 @@ class Lexer {
     return new Token(this.getString(l, this.next.value), l, this.next.value)
   }
 
-  number() {}
+  number() {
+    let state = 0
+    let l = Lexer.getCopy(this.next.value)
+    let count = 0
+    const endState = 5
+    while (state < endState) {
+      if (count++ > 16) break
+      switch (state) {
+        case 0: {
+          const { value } = this.getNext()
+          if (dispatchMap[value.c] === STATE.number) state = 0
+          else if (value.c === 'e') state = 1
+          else if (value.c === '.') state = 2
+          else throw this.error('UNEXPECTED')
+          break
+        }
+        case 1: {
+          const { value } = this.getNext()
+          if (dispatchMap[value.c] === STATE.number) state = 3
+          else throw this.error('UNEXPECTED')
+          break
+        }
+        case 2: {
+          const { value } = this.getNext()
+          if (dispatchMap[value.c] === STATE.number) state = 2
+          else if (value.c === 'e') state = 1
+          break
+        }
+        case 3: {
+          const { value } = this.getNext()
+          if (dispatchMap[value.c] === STATE.number) state = 3
+          else state = endState
+          break
+        }
+      }
+    }
+    return new Token(this.getString(l, this.next.value), l, this.next.value)
+  }
 
   operator() {
     let l = Lexer.getCopy(this.next.value)
