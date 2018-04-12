@@ -22,6 +22,11 @@ self.MonacoEnvironment = {
   },
 }
 
+monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+  noSemanticValidation: true,
+  noSyntaxValidation: true,
+})
+
 const source = monaco.editor.createModel(
   `(function name() {
   let x = 1 / 2;x/=3;
@@ -65,6 +70,9 @@ function render(lexer) {
       },
     ])
   })
+  div.addEventDelegate('mouseout', 'li', () => {
+    decoration = editor.deltaDecorations(decoration, [])
+  })
   const { tokenList, errorList } = lexer
   div.innerHTML = `<ul>
   ${tokenList
@@ -73,13 +81,15 @@ function render(lexer) {
         html`
         <li data-lr=${t.l.row} data-lc=${t.l.column} data-rr=${t.r.row} data-rc=${
           t.r.column
-        }>Token: <span class="string">${t.token}</span> Row: ${t.l.row} Column: ${t.l.column}</li>`,
+        }>Token: <abbr class="string" title=${t.getType()}>${t.token}</abbr> Row: ${t.l.row} Column: ${
+          t.l.column
+        }</li>`,
     )
     .join('')}
   ${errorList
     .map(
       ({ error, char: { row, column } }) =>
-        html`<li data-lr=${row} data-lc=${column} data-rr=${row} data-rc=${column} class="error">Error: <span>${
+        html`<li data-lr=${row} data-lc=${column} data-rr=${row} data-rc=${column + 1} class="error">Error: <span>${
           error.message
         }</span> Row: ${row} Column: ${column}</li>`,
     )

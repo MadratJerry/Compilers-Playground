@@ -86,60 +86,61 @@ class Lexer {
     while (state < 1) {
       switch (state) {
         case 0: {
-          const { value } = this.getNext()
-          if (dispatchMap[value.c] === STATE.identifier) state = 0
+          const { value: { c } } = this.getNext()
+          if (dispatchMap[c] === STATE.identifier || dispatchMap[c] === STATE.number) state = 0
           else state = 1
           break
         }
       }
     }
-    return new Token(this.getString(l, this.next.value), l, this.next.value)
+    return new Token(this.getString(l, this.next.value), l, this.next.value, 'identifier')
   }
 
   number() {
     let state = 0
     let l = Lexer.getCopy(this.next.value)
-    let count = 0
     const endState = 5
     while (state < endState) {
-      if (count++ > 16) break
       switch (state) {
         case 0: {
-          const { value } = this.getNext()
-          if (dispatchMap[value.c] === STATE.number) state = 0
-          else if (value.c === 'e') state = 1
-          else if (value.c === '.') state = 2
-          else throw this.error('UNEXPECTED')
+          const { value: { c } } = this.getNext()
+          if (dispatchMap[c] === STATE.number) state = 0
+          else if (c === 'e') state = 1
+          else if (c === '.') state = 2
+          else if (dispatchMap[c] == STATE.identifier) throw this.error('UNEXPECTED')
+          else state = endState
           break
         }
         case 1: {
-          const { value } = this.getNext()
-          if (dispatchMap[value.c] === STATE.number) state = 3
+          const { value: { c } } = this.getNext()
+          if (dispatchMap[c] === STATE.number) state = 3
           else throw this.error('UNEXPECTED')
           break
         }
         case 2: {
-          const { value } = this.getNext()
-          if (dispatchMap[value.c] === STATE.number) state = 2
-          else if (value.c === 'e') state = 1
+          const { value: { c } } = this.getNext()
+          if (dispatchMap[c] === STATE.number) state = 2
+          else if (c === 'e') state = 1
+          else throw this.error('UNEXPECTED')
           break
         }
         case 3: {
-          const { value } = this.getNext()
-          if (dispatchMap[value.c] === STATE.number) state = 3
+          const { value: { c } } = this.getNext()
+          if (dispatchMap[c] === STATE.number) state = 3
+          else if (c === '.' || dispatchMap[c] == STATE.identifier) throw this.error('UNEXPECTED')
           else state = endState
           break
         }
       }
     }
-    return new Token(this.getString(l, this.next.value), l, this.next.value)
+    return new Token(this.getString(l, this.next.value), l, this.next.value, 'number')
   }
 
   operator() {
     let l = Lexer.getCopy(this.next.value)
-    const { value } = this.getNext()
-    if (dispatchMap[value.c] === STATE.operator) {
-      if (tokenizer.operators.includes(this.getString(l, { row: l.row, column: l.column + 2 })))
+    const { value: { c } } = this.getNext()
+    if (dispatchMap[c] === STATE.operator) {
+      if (tokenizer.operator.includes(this.getString(l, { row: l.row, column: l.column + 2 })))
         return new Token(this.getString(l, this.getNext().value), l, this.next.value)
       else throw this.error('UNEXPECTED')
     } else return new Token(this.getString(l, this.next.value), l, this.next.value)
@@ -157,35 +158,33 @@ class Lexer {
           break
         }
         case 1: {
-          const { value } = this.getNext()
-          if (value.c === '"') state = endState
-          else if (value.c === '\n') throw this.error('UNTERMINATED')
-          else if (value.c === '\\') state = 3
+          const { value: { c } } = this.getNext()
+          if (c === '"') state = endState
+          else if (c === '\n') throw this.error('UNTERMINATED')
+          else if (c === '\\') state = 3
           break
         }
         case 2: {
-          const { value } = this.getNext()
-          if (value.c === "'") state = endState
-          else if (value.c === '\n') throw this.error('UNTERMINATED')
-          else if (value.c === '\\') state = 4
+          const { value: { c } } = this.getNext()
+          if (c === "'") state = endState
+          else if (c === '\n') throw this.error('UNTERMINATED')
+          else if (c === '\\') state = 4
           break
         }
         case 3: {
-          const { value } = this.getNext()
-          if (value.c === ' ') throw this.error('UNTERMINATED')
-          else state = 1
+          this.getNext()
+          state = 1
           break
         }
         case 4: {
-          const { value } = this.getNext()
-          if (value.c === ' ') throw this.error('UNTERMINATED')
-          else state = 2
+          this.getNext()
+          state = 2
           break
         }
       }
     }
     if (state === endState) this.getNext()
-    return new Token(this.getString(l, this.next.value), l, this.next.value)
+    return new Token(this.getString(l, this.next.value), l, this.next.value, 'string')
   }
 
   commentOrOperator() {
@@ -195,22 +194,23 @@ class Lexer {
     while (state < endState) {
       switch (state) {
         case 0: {
-          const { value } = this.getNext()
-          if (value.c === '*') state = 1
-          else if (value.c === '/') state = 2
-          else if (value.c === '=') state = 3
+          const { value: { c } } = this.getNext()
+          if (c === '*') state = 1
+          else if (c === '/') state = 2
+          else if (c === '=') state = 3
           else state = endState
           break
         }
         case 1: {
-          const { value } = this.getNext()
-          if (value.c === '*') state = 4
+          const { value: { c } } = this.getNext()
+          if (c === '*') state = 4
           else state = 1
           break
         }
         case 2: {
-          const { value } = this.getNext()
-          if (value.c === '\n') state = endState
+          const { value: { c } } = this.getNext()
+          if (c === '\n') state = endState
+          else state = 2
           break
         }
         case 3: {
@@ -219,20 +219,20 @@ class Lexer {
           break
         }
         case 4: {
-          const { value } = this.getNext()
-          if (value.c === '/') {
+          const { value: { c } } = this.getNext()
+          if (c === '/') {
             this.getNext()
             state = endState
           } else state = 1
         }
       }
     }
-    return new Token(this.getString(l, this.next.value), l, this.next.value)
+    return new Token(this.getString(l, this.next.value), l, this.next.value, 'comment')
   }
 
   symbol() {
     let l = Lexer.getCopy(this.next.value)
-    return new Token(this.getString(l, this.getNext().value), l, this.next.value)
+    return new Token(this.getString(l, this.getNext().value), l, this.next.value, 'symbol')
   }
 
   ignore() {}
@@ -248,7 +248,6 @@ class Lexer {
       if (done) break
       try {
         const result = this.dispatch(value)
-        console.log(result)
         if (!result) this.getNext()
         else this.tokenList.push(result)
       } catch (e) {
@@ -272,7 +271,6 @@ class Lexer {
     const { fnMap } = this
     const { c } = char
     const state = dispatchMap[c]
-    console.log(`dispatch ${state}`)
     if (state === undefined) throw this.error('INVALID')
     else return fnMap[state]()
   }
