@@ -7,7 +7,7 @@ const OUTPUT_PATH = path.resolve(__dirname, 'dist')
 const config = {
   mode: 'development',
   entry: {
-    app: './index.js',
+    app: path.resolve('./src/index.js'),
     'editor.worker': 'monaco-editor/esm/vs/editor/editor.worker.js',
     'json.worker': 'monaco-editor/esm/vs/language/json/json.worker',
     'css.worker': 'monaco-editor/esm/vs/language/css/css.worker',
@@ -30,7 +30,7 @@ const config = {
     new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs\/language\/typescript\/lib/),
     new HtmlWebpackPlugin({
       inject: true,
-      template: path.resolve('./index.html'),
+      template: path.resolve('./src/public/index.html'),
       chunks: ['app'],
     }),
   ],

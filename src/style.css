@@ -1,0 +1,46 @@
+html {
+  overflow: hidden;
+  font: 12px Monaco;
+}
+
+html,
+body,
+.container,
+#editor,
+#result {
+  height: 100%;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+}
+
+#result abbr,
+#result span {
+  display: inline-block;
+  width: 200px;
+}
+
+#result li {
+  cursor: pointer;
+}
+
+#result li:hover {
+  background: #eee;
+}
+
+#result .string {
+  color: #a31515;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#result .error {
+  color: red;
+}
+
+.myInlineDecoration {
+  background: #eee;
+}
