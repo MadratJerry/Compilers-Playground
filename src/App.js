@@ -1,11 +1,11 @@
-import monaco from './monaco'
 import Lexer from './Lexer'
 import Parser from './Parser'
+import CodeMirror from './codemirror'
 
 const html = String.raw
 
-const source = monaco.editor.createModel(
-  `(function name() {
+const editor = CodeMirror(document.getElementById('editor'), {
+  value: `(function name() {
   let x = 1 / 2;x/=3;
   const /*inline \\\\/\/** *
   ****comment*/a = 1e2
@@ -16,41 +16,32 @@ const source = monaco.editor.createModel(
   11';;;
   if(a>=b)console.log("wow");
 })()`,
-  'javascript',
-)
-
-const editor = monaco.editor.create(document.getElementById('editor'), {
-  model: source,
+  lineNumbers: true,
+  inputStyle: 'contenteditable',
+  mode: 'javascript',
 })
 
-source.onDidChangeContent(function() {
-  main()
-})
+editor.on('change', () => main())
 
 function main() {
-  const lexer = new Lexer(source.getValue())
+  const lexer = new Lexer(editor.getDoc().getValue())
   new Parser(lexer)
   render(lexer)
 }
 
-let decoration = []
+let mark
 function render(lexer) {
   const result = document.getElementById('result')
   const div = document.createElement('div')
   div.addEventDelegate('mouseover', 'li', e => {
-    const lr = parseInt(e.currentTarget.dataset.lr)
-    const lc = parseInt(e.currentTarget.dataset.lc)
-    const rr = parseInt(e.currentTarget.dataset.rr)
-    const rc = parseInt(e.currentTarget.dataset.rc)
-    decoration = editor.deltaDecorations(decoration, [
-      {
-        range: new monaco.Range(lr, lc, rr, rc),
-        options: { inlineClassName: 'myInlineDecoration' },
-      },
-    ])
+    const lr = parseInt(e.currentTarget.dataset.lr) - 1
+    const lc = parseInt(e.currentTarget.dataset.lc) - 1
+    const rr = parseInt(e.currentTarget.dataset.rr) - 1
+    const rc = parseInt(e.currentTarget.dataset.rc) - 1
+    mark = editor.getDoc().markText({ line: lr, ch: lc }, { line: rr, ch: rc }, { className: 'inlineMark' })
   })
   div.addEventDelegate('mouseout', 'li', () => {
-    decoration = editor.deltaDecorations(decoration, [])
+    mark.clear()
   })
   const { tokenList, errorList } = lexer
   div.innerHTML = `<ul>
