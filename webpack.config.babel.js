@@ -6,6 +6,7 @@ const OUTPUT_PATH = path.resolve(__dirname, 'dist')
 
 const config = {
   mode: 'development',
+  devtool: 'cheap-module-source-map',
   entry: {
     app: path.resolve('./src/index.js'),
     'editor.worker': 'monaco-editor/esm/vs/editor/editor.worker.js',
