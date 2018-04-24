@@ -1,5 +1,6 @@
 import monaco from './monaco'
 import Lexer from './Lexer'
+import Parser from './Parser'
 
 const html = String.raw
 
@@ -23,11 +24,13 @@ const editor = monaco.editor.create(document.getElementById('editor'), {
 })
 
 source.onDidChangeContent(function() {
-  parse()
+  main()
 })
 
-function parse() {
-  render(new Lexer(source.getValue()))
+function main() {
+  const lexer = new Lexer(source.getValue())
+  new Parser(lexer)
+  render(lexer)
 }
 
 let decoration = []
@@ -75,4 +78,4 @@ function render(lexer) {
   result.appendChild(div)
 }
 
-parse()
+main()
