@@ -4,6 +4,7 @@
     "dev": "npx webpack-dev-server"
   },
   "dependencies": {
+    "codemirror": "^5.37.0",
     "eslint": "^4.19.1",
     "monaco-editor": "^0.12.0"
   },
