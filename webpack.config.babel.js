@@ -1,6 +1,5 @@
 import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
 
 const { NODE_ENV } = process.env
 const OUTPUT_PATH = path.resolve(__dirname, 'dist')
@@ -21,7 +20,6 @@ const config = {
     ],
   },
   plugins: [
-    new MonacoWebpackPlugin({ languages: ['javascript'] }),
     new HtmlWebpackPlugin({
       inject: true,
       template: path.resolve('./src/public/index.html'),

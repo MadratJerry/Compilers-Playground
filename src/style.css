@@ -1,6 +1,10 @@
 html {
   overflow: hidden;
-  font: 12px Monaco;
+  font-family: 'Monaco';
+}
+
+.CodeMirror {
+  height: 100%;
 }
 
 html,
@@ -11,9 +15,19 @@ body,
   height: 100%;
 }
 
+#editor,
+#result {
+  width: 50%;
+}
+
 .container {
   display: flex;
   justify-content: space-between;
+}
+
+#result {
+  font-size: 12px;
+  overflow: scroll;
 }
 
 #result abbr,
@@ -41,6 +55,6 @@ body,
   color: red;
 }
 
-.myInlineDecoration {
+.inlineMark {
   background: #eee;
 }
