@@ -4022,9 +4022,13 @@ mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0, mkd
   dependencies:
     minimist "0.0.8"
 
-monaco-editor@^0.11.1:
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.11.1.tgz#17066de2e1399dcedb095045f5737b0f99f43750"
+monaco-editor-webpack-plugin@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-1.1.0.tgz#017fd2edb916ce9411f690e2e3d4f931509ea474"
+
+monaco-editor@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.12.0.tgz#cd8621017526b57746245104d764bbf52ad42283"
 
 move-concurrently@^1.0.1:
   version "1.0.1"

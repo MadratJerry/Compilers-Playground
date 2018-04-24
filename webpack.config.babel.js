@@ -1,20 +1,13 @@
 import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import webpack from 'webpack'
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
 
+const { NODE_ENV } = process.env
 const OUTPUT_PATH = path.resolve(__dirname, 'dist')
 
 const config = {
-  mode: 'development',
-  devtool: 'cheap-module-source-map',
-  entry: {
-    app: path.resolve('./src/index.js'),
-    'editor.worker': 'monaco-editor/esm/vs/editor/editor.worker.js',
-    'json.worker': 'monaco-editor/esm/vs/language/json/json.worker',
-    'css.worker': 'monaco-editor/esm/vs/language/css/css.worker',
-    'html.worker': 'monaco-editor/esm/vs/language/html/html.worker',
-    'ts.worker': 'monaco-editor/esm/vs/language/typescript/ts.worker',
-  },
+  mode: NODE_ENV,
+  devtool: NODE_ENV === 'production' ? 'source-map' : 'cheap-module-source-map',
   output: {
     filename: '[name].bundle.js',
     path: OUTPUT_PATH,
@@ -28,11 +21,11 @@ const config = {
     ],
   },
   plugins: [
-    new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs\/language\/typescript\/lib/),
+    new MonacoWebpackPlugin({ languages: ['javascript'] }),
     new HtmlWebpackPlugin({
       inject: true,
       template: path.resolve('./src/public/index.html'),
-      chunks: ['app'],
+      chunks: ['main'],
     }),
   ],
   devServer: {
