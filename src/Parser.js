@@ -1,4 +1,4 @@
-const errorMap = new Map([['ENDTOKEN', 'End of token']])
+const errorMap = new Map(Object.entries({ ENDTOKEN: 'End of token' }))
 
 class Parser {
   /**
@@ -11,7 +11,6 @@ class Parser {
     this.tokenList = lexer.tokenList.filter(token => token.getType() !== 'comment')
     this.nextToken = this.tokenGenerator()
     this.ast = { type: 'File' }
-    this.ast.program = []
     this.parse()
   }
 
@@ -19,7 +18,7 @@ class Parser {
     while (true) {
       try {
         this.getNext()
-        this.ast.program.push(this.$Program())
+        this.ast.program = this.$Program()
       } catch (e) {
         if (e.name === 'ENDTOKEN') break
         else throw e
@@ -35,7 +34,43 @@ class Parser {
   }
 
   $Statements() {
-    return [...this.$Declarations()]
+    const statements = []
+    const ExpressionStatement = this.$ExpressionStatement()
+    const BlockStatement = this.$BlockStatement()
+    const Declarations = this.$Declarations()
+    if (ExpressionStatement) statements.push(ExpressionStatement)
+    if (BlockStatement) statements.push(BlockStatement)
+    if (Declarations) statements.push(...Declarations)
+    console.log(statements)
+    return []
+    if (statements.length === 0) return []
+    else return statements.concat(this.$Statements())
+  }
+
+  $ExpressionStatement() {
+    const node = {}
+    node.expression = this.$Expression()
+    if (node.expression) return node
+  }
+
+  $Expression() {
+    let node
+    const { value } = this.next
+    if (value.token === '(') {
+      this.getNext()
+      node = this.$Expression()
+      const { value } = this.next
+      if (value.token === ')') {
+        this.getNext()
+      }
+    } else node = this.$FunctionExpression()
+    return node
+  }
+
+  $FunctionExpression() {
+    const node = this.$FunctionDeclaration()
+    node.type = 'FunctionExpression'
+    return node
   }
 
   $Declarations() {
@@ -82,11 +117,17 @@ class Parser {
   }
 
   $BlockStatement() {
+    const node = { type: 'BlockStatement' }
     const { value } = this.next
     if (value.token === '{') {
       this.getNext()
-      this.$Statements()
+      node.body = this.$Statements()
+      const { value } = this.getNext()
+      if (value.token === '}') {
+        this.getNext()
+      }
     }
+    return node
   }
 
   error(name) {

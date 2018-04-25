@@ -1,21 +1,12 @@
 import Lexer from './Lexer'
-import Parser from './Parser'
+import Parser from './Parser.js'
 import CodeMirror from './codemirror'
 
 const html = String.raw
 
 const editor = CodeMirror(document.getElementById('editor'), {
-  value: `(function name(a,b,) {
-  let x = 1 / 2;x/=3;
-  const /*inline \\\\/\/** *
-  ****comment*/a = 1e2
-  //One Line Comment//\\
-  let b = 1.234e10
-  var f = "foo\\
-  bar\\n";const g='a111e\\n\\
-  11';;;
-  if(a>=b)console.log("wow");
-})()`,
+  value: `(function name(a,b,){}
+)`,
   lineNumbers: true,
   inputStyle: 'contenteditable',
   mode: 'javascript',
