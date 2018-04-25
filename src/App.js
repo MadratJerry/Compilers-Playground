@@ -5,7 +5,7 @@ import CodeMirror from './codemirror'
 const html = String.raw
 
 const editor = CodeMirror(document.getElementById('editor'), {
-  value: `(function name() {
+  value: `(function name(a,b,) {
   let x = 1 / 2;x/=3;
   const /*inline \\\\/\/** *
   ****comment*/a = 1e2

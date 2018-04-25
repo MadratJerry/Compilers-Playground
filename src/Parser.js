@@ -1,8 +1,4 @@
-const errorMap = (() => {
-  const map = new Map()
-  map['ENDTOKEN'] = 'End of token'
-  return map
-})()
+const errorMap = new Map([['ENDTOKEN', 'End of token']])
 
 class Parser {
   /**
@@ -15,56 +11,77 @@ class Parser {
     this.tokenList = lexer.tokenList.filter(token => token.getType() !== 'comment')
     this.nextToken = this.tokenGenerator()
     this.ast = { type: 'File' }
+    this.ast.program = []
     this.parse()
   }
 
   parse() {
-    this.currentNode = this.ast
     while (true) {
       try {
         this.getNext()
-        this.$Program()
+        this.ast.program.push(this.$Program())
       } catch (e) {
         if (e.name === 'ENDTOKEN') break
+        else throw e
       }
     }
+    console.log(this.ast)
   }
 
   $Program() {
-    this.currentNode = { parent: this.currentNode, name: 'Program' }
-    this.$Element()
+    const program = { type: 'Program' }
+    program.body = this.$Statements()
+    return program
   }
 
-  $Element() {
+  $Statements() {
+    return [...this.$Declarations()]
+  }
+
+  $Declarations() {
+    return [this.$FunctionDeclaration()]
+  }
+
+  $FunctionDeclaration() {
+    const node = { type: 'FunctionDeclaration' }
     const { value } = this.next
     if (value.token === 'function') {
       const { value } = this.getNext()
       if (value.type === 'identifier') {
+        node.id = this.next.value.token
         const { value } = this.getNext()
         if (value.token === '(') {
           this.getNext()
-          this.$ParameterListOpt()
+          node.params = this.$Patterns()
           const { value } = this.next
           if (value.token === ')') {
             this.getNext()
-            this.$CompoundStatement()
+            this.$BlockStatement()
           }
         }
       }
     }
+    return node
   }
 
-  $ParameterListOpt() {
-    this.$ParameterList()
+  $Patterns() {
+    const patterns = []
+    const identifier = this.$Identifier()
+    if (identifier) patterns.push(identifier)
+    const { value } = this.next
+    if (value.token === ',') this.getNext()
+    return patterns.length === 0 ? patterns : patterns.concat(this.$Patterns())
   }
 
-  $ParameterList() {
+  $Identifier() {
     const { value } = this.next
     if (value.type === 'identifier') {
+      this.getNext()
+      return { type: 'Identifier', name: value.token }
     }
   }
 
-  $CompoundStatement() {
+  $BlockStatement() {
     const { value } = this.next
     if (value.token === '{') {
       this.getNext()
@@ -72,22 +89,10 @@ class Parser {
     }
   }
 
-  $Statements() {
-    this.$Statement()
-  }
-
-  $Statement() {
-    this.$VariablesOrExpression()
-  }
-
-  $VariablesOrExpression() {
-    console.log('var')
-  }
-
   error(name) {
     const error = new Error()
     error.name = name
-    error.message = errorMap[name]
+    error.message = errorMap.get(name)
     return error
   }
 
