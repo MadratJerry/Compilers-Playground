@@ -1,3 +1,3 @@
 import './utils/eventDelegate'
-import './App'
+import './app'
 import './style.css'

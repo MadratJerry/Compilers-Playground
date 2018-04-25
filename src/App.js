@@ -1,5 +1,5 @@
 import Lexer from './Lexer'
-import Parser from './Parser.js'
+import Parser from './parser'
 import CodeMirror from './codemirror'
 
 const html = String.raw
