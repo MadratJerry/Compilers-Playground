@@ -1,15 +1,15 @@
 import Lexer from '../Lexer'
-import Token from '../T'
-import * as Types from './types'
+import Token from '../tokenizer'
+import * as Types from '../types'
 
 function Parse(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<Function>) {
   let method = descriptor.value
   descriptor.value = function() {
     console.group()
-    console.log(`Start Parse: ${propertyName} Token: ${this.t.token}`)
+    console.log(`Start Parse: ${propertyName} Token: ${this.token().value}`)
     const result = method.apply(this, arguments)
     console.log(result)
-    console.log(`End Parse: ${propertyName} Token: ${this.t.token}`)
+    console.log(`End Parse: ${propertyName} Token: ${this.token().value}`)
     console.groupEnd()
     return result
   }
@@ -73,11 +73,11 @@ class Parser {
   @Parse
   Expression(): Types.Expression {
     let fe
-    if (this.t.token === '(') {
+    if (this.token().value === '(') {
       this.getToken()
       const e = this.Expression()
       if (e) {
-        if (this.t.token === ')') {
+        if (this.token().value === ')') {
           this.getToken()
           return e
         }
@@ -91,16 +91,16 @@ class Parser {
 
   @Parse
   FunctionExpression(): Types.FunctionExpression {
-    if (this.t.token === 'function') {
+    if (this.token().value === 'function') {
       const node = <Types.FunctionExpression>{ type: 'FunctionExpression' }
       this.getToken()
-      if (this.t.type === 'identifier') {
-        node.id = <Types.Identifier>{ type: 'Identifier', name: this.t.token }
+      if (this.token().type === 'identifier') {
+        node.id = <Types.Identifier>{ type: 'Identifier', name: this.token().value }
         this.getToken()
-        if (this.t.token === '(') {
+        if (this.token().value === '(') {
           this.getToken()
           node.params = this.FunctionParams()
-          if (this.t.token === ')') {
+          if (this.token().value === ')') {
             this.getToken()
             node.body = this.BlockStatement()
           }
@@ -113,10 +113,9 @@ class Parser {
   @Parse
   BlockStatement(): Types.BlockStatement {
     const node = <Types.BlockStatement>{ type: 'BlockStatement' }
-    if (this.t.token === '{') {
-      this.getToken()
+    if (this.token().value === '{') {
       node.body = this.Statements()
-      if (this.t.token === '}') {
+      if (this.token().value === '}') {
         this.getToken()
         return node
       }
@@ -127,7 +126,7 @@ class Parser {
   FunctionParams(): Array<Types.Pattern> {
     const i = this.Identifier()
     if (i) {
-      if (this.t.token === ',') {
+      if (this.token().value === ',') {
         this.getToken()
         return [i, ...this.FunctionParams()]
       }
@@ -137,11 +136,15 @@ class Parser {
   @Parse
   Identifier(): Types.Identifier {
     const i = <Types.Identifier>{ type: 'Identifier' }
-    if (this.t.type === 'identifier') {
-      i.name = this.t.token
+    if (this.token().type === 'identifier') {
+      i.name = this.token().value
       this.getToken()
       return i
     } else return null
+  }
+
+  token(): Token {
+    return this.t
   }
 
   getToken(): Token {

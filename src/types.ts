@@ -1,5 +1,21 @@
 export interface Node {
-  type: String
+  type: string
+  loc?: SourceLocation
+}
+
+export interface SourceLocation {
+  source?: string
+  start: Position
+  end: Position
+}
+
+export interface Position {
+  line: number
+  column: number
+}
+
+export interface Token extends Node {
+  value: string
 }
 
 export interface Program extends Node {
@@ -36,6 +52,12 @@ export interface BlockStatement extends Statement {
 }
 
 export interface Expression extends Node {}
+export interface BinaryExpression extends Expression {
+  type: 'BinaryExpression'
+  operator: BinaryOperator
+  left: Expression
+  right: Expression
+}
 
 export interface FunctionExpression extends Function, Expression {
   type: 'FunctionExpression'
@@ -49,4 +71,50 @@ export interface ExpressionStatement extends Statement {
 export interface BlockStatement extends Statement {
   type: 'BlockStatement'
   body: Array<Statement>
+}
+
+export interface EmptyStatement extends Statement {
+  type: 'EmptyStatement'
+}
+
+export enum BinaryOperator {
+  '==',
+  '!=',
+  '===',
+  '!==',
+  '<',
+  '<=',
+  '>',
+  '>=',
+  '<<',
+  '>>',
+  '>>>',
+  '+',
+  '-',
+  '*',
+  '/',
+  '%',
+  '**',
+  ',',
+  '^',
+  '&',
+  'in',
+  'instanceof',
+  ',>',
+}
+
+export enum AssignmentOperator {
+  '=',
+  '+=',
+  '-=',
+  '*=',
+  '/=',
+  '%=',
+  '**=',
+  '<<=',
+  '>>=',
+  '>>>=',
+  ',=',
+  '^=',
+  '&=',
 }
