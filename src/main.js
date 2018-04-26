@@ -1,6 +1,6 @@
-import Lexer from './Lexer'
 import Parser from './parser'
 import CodeMirror from './codemirror'
+import Tokenizer from './tokenizer'
 
 const html = String.raw
 
@@ -15,9 +15,9 @@ const editor = CodeMirror(document.getElementById('editor'), {
 editor.on('change', () => main())
 
 function main() {
-  const lexer = new Lexer(editor.getDoc().getValue())
-  new Parser(lexer)
-  render(lexer)
+  // const lexer = new Lexer(editor.getDoc().getValue())
+  const tokenizer = new Tokenizer(editor.getDoc().getValue())
+  // new Parser(lexer)
 }
 
 let mark

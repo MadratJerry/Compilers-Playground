@@ -1,16 +1,6 @@
-import * as Types from '../types'
+import Token from './token'
+import Tokenizer from './tokenizer'
 
-class Token implements Types.Token {
-  type: string
-  value: string
-  start: number
-  end: number
-  loc: Types.SourceLocation
-  constructor(value: string, loc: Types.SourceLocation, type?: string) {
-    this.value = value
-    this.loc = loc
-    this.type = type ? type : ''
-  }
-}
+export default Tokenizer
 
-export default Token
+export { Token }

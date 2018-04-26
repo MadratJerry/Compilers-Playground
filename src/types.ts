@@ -10,8 +10,13 @@ export interface SourceLocation {
 }
 
 export interface Position {
-  line: number
-  column: number
+  line: number // >= 1
+  column: number // >= 0
+}
+
+export interface Char {
+  value: string
+  pos: Position
 }
 
 export interface Token extends Node {

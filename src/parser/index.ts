@@ -1,5 +1,5 @@
 import Lexer from '../Lexer'
-import Token from '../tokenizer'
+import { Token } from '../tokenizer'
 import * as Types from '../types'
 
 function Parse(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<Function>) {
