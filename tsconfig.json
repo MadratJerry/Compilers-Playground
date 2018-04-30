@@ -9,6 +9,7 @@
     "downlevelIteration": true,
     "jsx": "react",
     "experimentalDecorators": true,
+    "skipLibCheck": true,
     "allowJs": true
   }
 }
