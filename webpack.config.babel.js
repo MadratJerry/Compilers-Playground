@@ -1,5 +1,6 @@
 import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import { TsConfigPathsPlugin } from 'awesome-typescript-loader'
 
 const { NODE_ENV } = process.env
 const OUTPUT_PATH = path.resolve(__dirname, 'dist')
@@ -21,6 +22,7 @@ const config = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
+    plugins: [new TsConfigPathsPlugin()],
   },
   plugins: [
     new HtmlWebpackPlugin({
