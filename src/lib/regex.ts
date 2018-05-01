@@ -1,4 +1,5 @@
 import ParseDecorator from './parseDecorator'
+import NFA from './nfa'
 
 const Parse = ParseDecorator(
   (propertyName: string, self: Regex) => console.log(`> ${propertyName} ${self.lookahead()}`),
@@ -8,14 +9,15 @@ const Parse = ParseDecorator(
 export default class Regex {
   regex: string
   index: number = -1
+  id: number
 
   constructor(regex: string) {
     this.regex = regex
-    console.log(this.parse())
+    console.log(this.parse().showGraphviz())
     if (this.hasNext()) throw Error(`Abort unexpected at offset: ${this.index}`)
   }
 
-  parse() {
+  parse(): NFA {
     return this.expression()
   }
 
@@ -24,7 +26,7 @@ export default class Regex {
     let fa = this.term()
     if (this.lookahead() === '|') {
       this.next()
-      fa = fa + this.expression() + '|'
+      fa.union(this.expression())
     }
     return fa
   }
@@ -33,7 +35,7 @@ export default class Regex {
   term() {
     let fa = this.factor()
     while (this.lookahead() !== '|' && this.lookahead() != ')' && this.hasNext()) {
-      fa = fa + this.factor()
+      fa.concat(this.factor())
     }
     return fa
   }
@@ -43,13 +45,13 @@ export default class Regex {
     let fa = this.item()
     while (this.lookahead() === '*') {
       this.next()
-      fa = `(${fa})`
+      fa.closure()
     }
     return fa
   }
 
   @Parse
-  item() {
+  item(): NFA {
     if (this.lookahead() === '(') {
       this.next()
       const fa = this.expression()
@@ -62,8 +64,8 @@ export default class Regex {
   }
 
   @Parse
-  symbol() {
-    const fa = this.lookahead()
+  symbol(): NFA {
+    const fa = this.lookahead() ? new NFA(this.lookahead()) : null
     this.next()
     return fa
   }
@@ -73,7 +75,7 @@ export default class Regex {
   }
 
   next() {
-    return this.hasNext() ? this.regex.charAt(this.index++) : ''
+    return this.hasNext() ? this.regex.charAt(this.index++) : null
   }
 
   hasNext() {
