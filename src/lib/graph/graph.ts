@@ -1,13 +1,13 @@
-import Vertex from './vertex'
 import Edge from './edge'
 
 export default class Graph<T, E> {
-  map: Map<Vertex<T>, Set<Edge<T, E>>> = new Map()
+  map: Map<T, Set<Edge<T, E>>> = new Map()
 
-  addEdge(from: Vertex<T>, to: Vertex<T>, weight: E) {
+  addEdge(from: T, to: T, weight: E) {
     const edgeSet = this.map.get(from)
     const newEdge = new Edge<T, E>(from, to, weight)
     if (edgeSet) edgeSet.add(newEdge)
     else this.map.set(from, new Set([newEdge]))
+    if (!this.map.get(to)) this.map.set(to, new Set())
   }
 }

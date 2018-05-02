@@ -5,7 +5,7 @@ import FA from '@/lib/fa'
 
 export default class App extends React.Component {
   componentDidMount() {
-    const r = new Regex('a|b|c')
+    const r = new Regex('(a|b)*abb')
   }
 
   render() {

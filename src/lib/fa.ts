@@ -1,4 +1,5 @@
 import Graph, { Vertex } from './graph'
+import { stat } from 'fs/promises'
 
 const epsilon = 'ε'
 let hash = 0
@@ -10,7 +11,7 @@ class State extends Vertex<number> {
   }
 }
 
-export default class FA extends Graph<number, string> {
+export default class FA extends Graph<State, string> {
   symbol: string
   start: State
   end: State
@@ -62,11 +63,11 @@ export default class FA extends Graph<number, string> {
     nfa.inputSet.forEach(i => this.inputSet.add(i))
   }
 
-  showGraphviz() {
+  showGraphviz(toString: (obj: any) => string = obj => obj) {
     console.group()
     let s: any = []
     this.map.forEach(v => {
-      v.forEach(e => s.push(`${e.from} -> ${e.to} [ label = "${e.weight}" ];`))
+      v.forEach(e => s.push(`${toString(e.from)} -> ${toString(e.to)} [ label = "${e.weight}" ];`))
     })
     console.log(`
   digraph finite_state_machine {
@@ -81,18 +82,18 @@ export default class FA extends Graph<number, string> {
 
   epsilonClosure(v: Set<State>): Set<State> {
     const stack = [...v]
+    const result = new Set(v)
     let a = 0
     while (stack.length !== 0) {
       const state = stack.pop()
       this.map.get(state).forEach(e => {
         if (e.weight === epsilon && !v.has(e.to)) {
-          v.add(e.to)
+          result.add(e.to)
           stack.push(e.to)
         }
       })
     }
-    console.log(v)
-    return v
+    return result
   }
 
   move(v: Set<State>, transition: string): Set<State> {
@@ -102,7 +103,6 @@ export default class FA extends Graph<number, string> {
         if (e.weight === transition) result.add(e.to)
       }),
     )
-    console.log(result)
     return result
   }
 
@@ -112,24 +112,35 @@ export default class FA extends Graph<number, string> {
       for (const i of dStates) yield i
     })()
     let T = getT.next()
+    const DFA = new Graph<Set<State>, string>()
     while (!T.done) {
       this.inputSet.forEach(c => {
         const states = this.epsilonClosure(this.move(T.value, c))
         if (states.size) {
-          if (!FA.isInSet(dStates, states)) {
+          const U = FA.isInSet(dStates, states)
+          if (U === states) {
             dStates.add(states)
           }
+          DFA.addEdge(T.value, U, c)
         }
       })
       T = getT.next()
     }
+    let id = 0
+    const dMap = new Map()
+    dStates.forEach(v => dMap.set(v, id++))
+    this.showGraphviz.call(DFA, (obj: any) => dMap.get(obj))
   }
 
-  static isInSet(set: Set<Set<State>>, T: Set<State>): boolean {
-    set.forEach(s => {
-      if (FA.isSetEqual(s, T)) return true
-    })
-    return false
+  showSet(set: Set<any>) {
+    let a: Array<string> = []
+    set.forEach(s => a.push(`${s}`))
+    return `{${a.join(',')}}`
+  }
+
+  static isInSet(set: Set<Set<State>>, T: Set<State>): Set<State> {
+    for (const s of set) if (FA.isSetEqual(s, T)) return s
+    return T
   }
 
   static isSetEqual(x: Set<State>, y: Set<State>): boolean {
