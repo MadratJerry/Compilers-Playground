@@ -1,5 +1,5 @@
 import ParseDecorator from './parseDecorator'
-import NFA from './nfa'
+import FA from './fa'
 
 const Parse = ParseDecorator(
   (propertyName: string, self: Regex) => console.log(`> ${propertyName} ${self.lookahead()}`),
@@ -13,11 +13,13 @@ export default class Regex {
 
   constructor(regex: string) {
     this.regex = regex
-    console.log(this.parse().showGraphviz())
+    const nfa = this.parse()
+    console.log(nfa.showGraphviz())
+    nfa.DFA()
     if (this.hasNext()) throw Error(`Abort unexpected at offset: ${this.index}`)
   }
 
-  parse(): NFA {
+  parse(): FA {
     return this.expression()
   }
 
@@ -51,7 +53,7 @@ export default class Regex {
   }
 
   @Parse
-  item(): NFA {
+  item(): FA {
     if (this.lookahead() === '(') {
       this.next()
       const fa = this.expression()
@@ -64,8 +66,8 @@ export default class Regex {
   }
 
   @Parse
-  symbol(): NFA {
-    const fa = this.lookahead() ? new NFA(this.lookahead()) : null
+  symbol(): FA {
+    const fa = this.lookahead() ? new FA(this.lookahead()) : null
     this.next()
     return fa
   }
