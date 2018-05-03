@@ -18,7 +18,7 @@ export default class Regex {
     this.regex = regex
     const nfa = this.parse()
     this.NFA = nfa
-    this.DFA = nfa.DFA()
+    this.DFA = this.NFA ? nfa.DFA() : null
     if (this.hasNext()) throw Error(`Abort unexpected at offset: ${this.index}`)
   }
 

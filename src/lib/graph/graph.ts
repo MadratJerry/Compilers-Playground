@@ -1,6 +1,8 @@
 import Edge from './edge'
 
 export default class Graph<T, E> {
+  start?: T | any
+  end?: T | any
   map: Map<T, Set<Edge<T, E>>> = new Map()
 
   addEdge(from: T, to: T, weight: E) {

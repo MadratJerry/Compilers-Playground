@@ -1,5 +1,6 @@
 import Graph, { Vertex } from './graph'
 import { stat } from 'fs/promises'
+import { isUndefined } from 'util'
 
 const epsilon = 'ε'
 let hash = 0
@@ -12,8 +13,6 @@ class State extends Vertex<number> {
 }
 
 export default class FA extends Graph<State, string> {
-  start: State
-  end: State
   inputSet: Set<string> = new Set()
 
   constructor(symbol?: string) {
@@ -64,8 +63,9 @@ export default class FA extends Graph<State, string> {
   }
 
   static graphviz(fa: any): string {
-    let id = 0
-    let s: any = []
+    if (!fa) return ''
+    let id = 0,
+      s: any = []
     const idMap = new Map()
     const getId = (o: State) => {
       let i = idMap.get(o)
@@ -75,15 +75,16 @@ export default class FA extends Graph<State, string> {
         return id++
       }
     }
-    fa.map.forEach((v: any) => {
-      v.forEach((e: any) => {
-        if (e.from) s.push(`${getId(e.from)} -> ${getId(e.to)} [ label = "${e.weight}" ];`)
-      })
-    })
+    for (const v of fa.map)
+      for (const e of v[1]) if (e.from) s.push(`${getId(e.from)} -> ${getId(e.to)} [ label = "${e.weight}" ];`)
     return `digraph finite_state_machine {
               rankdir=LR;
               size="8,5"
-              node [shape = doublecircle]; ${fa.end ? getId(fa.end) + ';' : ''}
+              node [shape = doublecircle]; ${(() => {
+                if (Array.isArray(fa.end)) {
+                  return fa.end.map((e: any) => getId(e)).join(' ') + ';'
+                } else return fa.end ? getId(fa.end) + ';' : ''
+              })()}
               node [shape = circle];
               ${s.join('\n')}
             }`
@@ -92,26 +93,21 @@ export default class FA extends Graph<State, string> {
   epsilonClosure(v: Set<State>): Set<State> {
     const stack = [...v]
     const result = new Set(v)
-    let a = 0
     while (stack.length !== 0) {
       const state = stack.pop()
-      this.map.get(state).forEach(e => {
-        if (e.weight === epsilon && !v.has(e.to)) {
+      for (const e of this.map.get(state)) {
+        if (e.weight === epsilon && !result.has(e.to)) {
           result.add(e.to)
           stack.push(e.to)
         }
-      })
+      }
     }
     return result
   }
 
   move(v: Set<State>, transition: string): Set<State> {
     const result = new Set()
-    v.forEach(s =>
-      this.map.get(s).forEach(e => {
-        if (e.weight === transition) result.add(e.to)
-      }),
-    )
+    for (const s of v) for (const e of this.map.get(s)) if (e.weight === transition) result.add(e.to)
     return result
   }
 
@@ -122,6 +118,11 @@ export default class FA extends Graph<State, string> {
     })()
     let T = getT.next()
     const DFA = new Graph<Set<State>, string>()
+    const isEnd = (t: Set<State>) => {
+      for (const e of t) if (e == this.end) return true
+      return false
+    }
+    DFA.end = []
     while (!T.done) {
       this.inputSet.forEach(c => {
         const states = this.epsilonClosure(this.move(T.value, c))
@@ -135,6 +136,7 @@ export default class FA extends Graph<State, string> {
       })
       T = getT.next()
     }
+    for (const e of dStates) if (isEnd(e)) DFA.end.push(e)
     return DFA
   }
 

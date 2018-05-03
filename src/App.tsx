@@ -14,10 +14,6 @@ export default class App extends React.Component {
     this.dfa = React.createRef<HTMLElement>()
   }
 
-  componentDidMount() {
-    const r = new Regex('(a|b)*abb')
-  }
-
   render() {
     return (
       <>
