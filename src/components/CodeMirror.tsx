@@ -3,21 +3,21 @@ import * as codemirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/mode/javascript/javascript'
 
-export default class CodeMirror extends React.Component {
+interface P {
+  config: codemirror.EditorConfiguration
+  onChange: any
+}
+export default class CodeMirror extends React.Component<P> {
   editor: any
 
-  constructor(props: any) {
+  constructor(props: P) {
     super(props)
     this.editor = React.createRef<HTMLElement>()
   }
 
   componentDidMount() {
-    const editor = codemirror(e => this.editor.current.appendChild(e), {
-      value: `function name(a, b) { };
-let a = 1;`,
-      lineNumbers: true,
-      mode: 'javascript',
-    })
+    const editor = codemirror(e => this.editor.current.appendChild(e), this.props.config)
+    editor.on('change', this.props.onChange)
   }
 
   render() {

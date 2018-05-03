@@ -12,18 +12,18 @@ class State extends Vertex<number> {
 }
 
 export default class FA extends Graph<State, string> {
-  symbol: string
   start: State
   end: State
   inputSet: Set<string> = new Set()
 
-  constructor(symbol: string) {
+  constructor(symbol?: string) {
     super()
-    this.symbol = symbol
-    this.start = new State()
-    this.end = new State()
-    this.addEdge(this.start, this.end, symbol)
-    this.inputSet.add(symbol)
+    if (symbol) {
+      this.start = new State()
+      this.end = new State()
+      this.addEdge(this.start, this.end, symbol)
+      this.inputSet.add(symbol)
+    }
   }
 
   closure() {
@@ -63,21 +63,30 @@ export default class FA extends Graph<State, string> {
     nfa.inputSet.forEach(i => this.inputSet.add(i))
   }
 
-  showGraphviz(toString: (obj: any) => string = obj => obj) {
-    console.group()
+  static graphviz(fa: any): string {
+    let id = 0
     let s: any = []
-    this.map.forEach(v => {
-      v.forEach(e => s.push(`${toString(e.from)} -> ${toString(e.to)} [ label = "${e.weight}" ];`))
+    const idMap = new Map()
+    const getId = (o: State) => {
+      let i = idMap.get(o)
+      if (i) return i
+      else {
+        idMap.set(o, id)
+        return id++
+      }
+    }
+    fa.map.forEach((v: any) => {
+      v.forEach((e: any) => {
+        if (e.from) s.push(`${getId(e.from)} -> ${getId(e.to)} [ label = "${e.weight}" ];`)
+      })
     })
-    console.log(`
-  digraph finite_state_machine {
-  rankdir=LR;
-  size="8,5"
-  node [shape = doublecircle]; ${this.end};
-  node [shape = circle];
-  ${s.join('\n')}
-}`)
-    console.groupEnd()
+    return `digraph finite_state_machine {
+              rankdir=LR;
+              size="8,5"
+              node [shape = doublecircle]; ${fa.end ? getId(fa.end) + ';' : ''}
+              node [shape = circle];
+              ${s.join('\n')}
+            }`
   }
 
   epsilonClosure(v: Set<State>): Set<State> {
@@ -126,10 +135,7 @@ export default class FA extends Graph<State, string> {
       })
       T = getT.next()
     }
-    let id = 0
-    const dMap = new Map()
-    dStates.forEach(v => dMap.set(v, id++))
-    this.showGraphviz.call(DFA, (obj: any) => dMap.get(obj))
+    return DFA
   }
 
   showSet(set: Set<any>) {

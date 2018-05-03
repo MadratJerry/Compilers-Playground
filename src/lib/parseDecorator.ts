@@ -6,11 +6,15 @@ export default function ParseDecorator(
   return function(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<Function>) {
     let method = descriptor.value
     descriptor.value = function() {
-      console.group()
-      if (!mute) before(propertyName, this)
+      if (!mute) {
+        console.group()
+        before(propertyName, this)
+      }
       const result = method.apply(this, arguments)
-      if (!mute) after(propertyName, this)
-      console.groupEnd()
+      if (!mute) {
+        after(propertyName, this)
+        console.groupEnd()
+      }
       return result
     }
   }

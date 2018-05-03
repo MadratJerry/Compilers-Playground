@@ -4,18 +4,21 @@ import FA from './fa'
 const Parse = ParseDecorator(
   (propertyName: string, self: Regex) => console.log(`> ${propertyName} ${self.lookahead()}`),
   (propertyName: string, self: Regex) => console.log(`< ${propertyName} ${self.lookahead()}`),
+  true,
 )
 
 export default class Regex {
   regex: string
   index: number = -1
   id: number
+  NFA: FA
+  DFA: any
 
   constructor(regex: string) {
     this.regex = regex
     const nfa = this.parse()
-    console.log(nfa.showGraphviz())
-    nfa.DFA()
+    this.NFA = nfa
+    this.DFA = nfa.DFA()
     if (this.hasNext()) throw Error(`Abort unexpected at offset: ${this.index}`)
   }
 
