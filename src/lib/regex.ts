@@ -1,5 +1,5 @@
-import ParseDecorator from './parseDecorator'
 import FA from './fa'
+import ParseDecorator from './parseDecorator'
 
 const Parse = ParseDecorator(
   (propertyName: string, self: Regex) => console.log(`> ${propertyName} ${self.lookahead()}`),
@@ -13,12 +13,14 @@ export default class Regex {
   id: number
   NFA: FA
   DFA: any
+  MFA: any
 
   constructor(regex: string) {
     this.regex = regex
     const nfa = this.parse()
     this.NFA = nfa
     this.DFA = this.NFA ? nfa.DFA() : null
+    this.MFA = this.DFA ? nfa.MFA(this.DFA) : null
     if (this.hasNext()) throw Error(`Abort unexpected at offset: ${this.index}`)
   }
 

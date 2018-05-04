@@ -1,18 +1,15 @@
 import Graph, { Vertex } from './graph'
-import { stat } from 'fs/promises'
-import { isUndefined } from 'util'
 
 const epsilon = 'ε'
-let hash = 0
 
 class State extends Vertex<number> {
   label: number
   constructor(label?: number) {
-    super(label || hash++)
+    super(label)
   }
 }
 
-export default class FA extends Graph<State, string> {
+export default class FA extends Graph<any, string> {
   inputSet: Set<string> = new Set()
 
   constructor(symbol?: string) {
@@ -69,7 +66,8 @@ export default class FA extends Graph<State, string> {
     const idMap = new Map()
     const getId = (o: State) => {
       let i = idMap.get(o)
-      if (i) return i
+      // check whether undefined, because it's a basic type
+      if (i != undefined) return i
       else {
         idMap.set(o, id)
         return id++
@@ -113,31 +111,80 @@ export default class FA extends Graph<State, string> {
 
   DFA() {
     const dStates = new Set<Set<State>>([this.epsilonClosure(new Set([this.start]))])
-    const getT = (function*(): IterableIterator<Set<State>> {
-      for (const i of dStates) yield i
-    })()
-    let T = getT.next()
     const DFA = new Graph<Set<State>, string>()
-    const isEnd = (t: Set<State>) => {
-      for (const e of t) if (e == this.end) return true
+    const isHas = (t: Set<State>, s: State) => {
+      for (const e of t) if (e == s) return true
       return false
     }
     DFA.end = []
-    while (!T.done) {
-      this.inputSet.forEach(c => {
-        const states = this.epsilonClosure(this.move(T.value, c))
+    for (const T of dStates) {
+      for (const c of this.inputSet) {
+        const states = this.epsilonClosure(this.move(T, c))
         if (states.size) {
           const U = FA.isInSet(dStates, states)
-          if (U === states) {
-            dStates.add(states)
-          }
-          DFA.addEdge(T.value, U, c)
+          if (U === states) dStates.add(states)
+          if (states.size) DFA.addEdge(T, U, c)
         }
-      })
-      T = getT.next()
+      }
     }
-    for (const e of dStates) if (isEnd(e)) DFA.end.push(e)
+    for (const e of dStates) if (isHas(e, this.end)) DFA.end.push(e)
     return DFA
+  }
+
+  MFA(dfa: Graph<Set<State>, string>) {
+    const MFA = new Graph<Set<State>, string>()
+    const F = new Set(dfa.end)
+    const SF = new Set()
+    dfa.map.forEach((v, k) => {
+      if (!F.has(k)) SF.add(k)
+    })
+    const findP = (s: Set<State>) => {
+      for (const t of terms) {
+        for (const n of t) {
+          if (s === n) return t
+        }
+      }
+    }
+    const terms = new Set([F, SF])
+    for (const T of terms) {
+      if (T.size === 1) continue
+      for (const s of this.inputSet) {
+        const nMap = new Map()
+        const nT = new Set(T)
+        for (const n of T) {
+          for (const e of dfa.map.get(n)) {
+            if (e.weight === s) {
+              nT.delete(n)
+              const p = findP(e.to)
+              if (nMap.get(p)) {
+                nMap.get(p).add(n)
+              } else {
+                nMap.set(p, new Set([n]))
+              }
+            }
+          }
+        }
+        if (nT.size) nMap.set(0, nT)
+        if (nMap.size > 1) {
+          nMap.forEach(v => terms.add(v))
+          terms.delete(T)
+          break
+        }
+      }
+    }
+    for (const t of terms) {
+      for (const s of t) {
+        for (const es of dfa.map.get(s)) {
+          MFA.addEdge(findP(es.from), findP(es.to), es.weight)
+        }
+        break
+      }
+    }
+    MFA.end = []
+    const endSet = new Set()
+    for (const e of dfa.end) endSet.add(findP(e))
+    for (const e of endSet) MFA.end.push(e)
+    return MFA
   }
 
   showSet(set: Set<any>) {
