@@ -6,9 +6,10 @@ class Token implements Types.Token {
   start: number
   end: number
   loc: Types.SourceLocation
-  constructor(value: string, loc: Types.SourceLocation, type?: string) {
+  constructor(value: string, start: number, end: number, type?: string) {
+    this.start = start
+    this.end = end
     this.value = value
-    this.loc = loc
     this.type = type ? type : ''
   }
 }

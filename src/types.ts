@@ -10,7 +10,7 @@ export interface SourceLocation {
 }
 
 export interface Position {
-  line: number // >= 1
+  line: number // >= 0
   column: number // >= 0
 }
 
