@@ -18,9 +18,11 @@ class LexicalDefinition {
       return (s: string, index: number = 0) => {
         const list: Array<any> = []
         for (let m = regex.exec(s); m != null; m = regex.exec(s)) {
-          m.forEach(
-            (s: any, i: number) => (captureMap.get(i) ? list.push(...captureMap.get(i)(s, index + m.index)) : 0),
-          )
+          let l = m.index
+          for (const key of captureMap.keys()) {
+            list.push(...captureMap.get(key)(m[key], index + l))
+            l += m[key] ? m[key].length : 0
+          }
         }
         return list
       }
@@ -31,18 +33,15 @@ class LexicalDefinition {
         if (action) return this.parseAction(action)(m[0], index + m.index)
         else if (group) {
           const list: Array<any> = []
-          group.forEach((g: any, i: number) => list.push(...this.parseAction(g)(m[i + 1]), index + m.index))
+          group.reduce((l: number, g: any, i: number) => {
+            list.push(...this.parseAction(g)(m[i + 1]), index + m[i + 1] ? m[i + 1].length : 0)
+            return l + m[i + 1] ? m[i + 1].length : 0
+          }, 0)
           return list
         }
       }
     } else if (typeof a === 'string') {
-      return (s: any, index: number = 0) => {
-        if (s) {
-          console.log(`${s} ${a} ${index}`)
-          return [{ input: s, start: index, end: s.length + index, type: a }]
-        }
-        return []
-      }
+      return (s: any, index: number = 0) => (s ? [{ input: s, start: index, end: s.length + index, type: a }] : [])
     }
   }
 
@@ -88,19 +87,29 @@ class RETokenizer {
     lineMap.push(beginIndex)
     const getLoc = (start: number, end: number) => {
       const result = { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }
-      let o1 = false,
-        o2 = false
-      for (let i = 1; i < lineMap.length; i++) {
-        if (o2 && o2) break
-        if (start >= lineMap[i - 1] && start <= lineMap[i]) {
-          result.end = { line: i - 1, column: end - lineMap[i - 1] }
-          o1 = true
+      const bs = (index: number, isEnd: boolean) => {
+        let l = 0,
+          r = lineMap.length - 1,
+          mid: number
+        while (true) {
+          if (l > r) {
+            mid = l - 1
+            break
+          }
+          mid = Math.floor((l + r) / 2)
+          if (lineMap[mid] > index) r = mid - 1
+          else if (lineMap[mid] < index) l = mid + 1
+          else {
+            mid -= isEnd ? 1 : 0
+            break
+          }
         }
-        if (end >= lineMap[i - 1] && end <= lineMap[i]) {
-          result.end = { line: i - 2, column: end - lineMap[i - 1] }
-          o2 = true
-        }
+        return mid
       }
+      const startLine = bs(start, false)
+      const endLine = bs(end, true)
+      result.start = { line: startLine, column: start - lineMap[startLine] }
+      result.end = { line: endLine, column: end - lineMap[endLine] }
       return result
     }
     this.tokens = this.ld.tokenizer(this.text).map(({ input, start, end, type }: any) => {

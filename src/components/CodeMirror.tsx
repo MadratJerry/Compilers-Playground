@@ -1,7 +1,6 @@
-import * as React from 'react'
 import * as codemirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
-import 'codemirror/mode/javascript/javascript'
+import * as React from 'react'
 
 interface P {
   config: codemirror.EditorConfiguration
