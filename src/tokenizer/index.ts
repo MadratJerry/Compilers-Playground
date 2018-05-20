@@ -1,5 +1,5 @@
 import Token from './token'
-import Tokenizer from './re-tokenizer'
+import Tokenizer from './tokenizer'
 
 export default Tokenizer
 export { Token }
