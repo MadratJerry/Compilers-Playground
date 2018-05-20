@@ -3,23 +3,30 @@ import Token from './token'
 type Rule = Array<any>
 interface LanguageSyntaxDefinition {
   tokenizer: { root: Array<Rule>; [state: string]: Array<Rule> }
+  [definition: string]: Array<any> | any
 }
 
 // A monarch engine like language syntax definition
 class Monarch {
   def: LanguageSyntaxDefinition
   tokenizer: (text: string) => Array<any>
+  private replace(text: string): string {
+    const p = /@(\w*)/g,
+      replaceList = []
+    for (let m = p.exec(text); m !== null; m = p.exec(text)) replaceList.push(m[1])
+    for (const r of replaceList) text = text.replace(`@${r}`, this.def[r] ? this.def[r].source : r)
+    return text
+  }
   constructor(def: LanguageSyntaxDefinition) {
     this.def = def
     const { tokenizer } = this.def
     const { root } = tokenizer
     this.tokenizer = text => {
-      const regex = new RegExp(root.map(rule => `(${rule[0].source})`).join('|'), 'g')
+      const regex = new RegExp(root.map(rule => `(${this.replace(rule[0].source)})`).join('|'), 'g')
       const result = []
-      for (let m = regex.exec(text); m !== null; m = regex.exec(text)) {
+      for (let m = regex.exec(text); m !== null; m = regex.exec(text))
         for (let i = 1; i < m.length; i++)
           if (m[i]) result.push({ input: m[i], start: m.index, end: m[i].length + m.index, type: root[i - 1][1] })
-      }
       return result
     }
   }

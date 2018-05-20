@@ -8,21 +8,77 @@ export default class App extends React.Component {
   }
 
   tokenizer: Tokenizer = new Tokenizer({
+    // prettier-ignore
+    keywords: [
+      'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue', 'debugger',
+      'default', 'delete', 'do', 'double', 'else', 'enum', 'export', 'extends', 'false', 'final',
+      'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import', 'in',
+      'instanceof', 'int', 'interface', 'long', 'native', 'new', 'null', 'package', 'private',
+      'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized', 'this',
+      'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while',
+      'with'
+    ],
+    // prettier-ignore
+    builtins: [
+      'define','require','window','document','undefined'
+    ],
+    // prettier-ignore
+    operators: [
+      '=', '>', '<', '!', '~', '?', ':',
+      '==', '<=', '>=', '!=', '&&', '||', '++', '--',
+      '+', '-', '*', '/', '&', '|', '^', '%', '<<',
+      '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=',
+      '^=', '%=', '<<=', '>>=', '>>>='
+    ],
+    exponent: /[eE][\-+]?[0-9]+/,
     tokenizer: {
-      root: [[/[a-zA-Z_\$][\w\$]*/, 'IDENTIFIER'], [/[{}()\[\]]/, 'BRACKETS'], [/[;,.]/, 'DELIMITER']],
+      root: [
+        [/[a-zA-Z_\$][\w\$]*/, 'IDENTIFIER'],
+        [/[{}()\[\]]/, 'BRACKETS'],
+        [/[;,.]/, 'DELIMITER'],
+        // numbers
+        [/\d+\.\d*(?:@exponent)?/, 'NUMBER.FLOAT'],
+        [/\.\d+(?:@exponent)?/, 'NUMBER.FLOAT'],
+        [/\d+@exponent/, 'NUMBER.FLOAT'],
+        [/0[xX][\da-fA-F]+/, 'NUMBER.HEX'],
+        [/0[0-7]+/, 'NUMBER.OCTAL'],
+        [/\d+/, 'NUMBER'],
+        // comment
+        [/\/\/.*\n/, 'COMMENT'],
+        [/\/\*[.\S\W]*\*\//, 'COMMENT'],
+      ],
     },
   })
 
-  componentDidMount() {
-    this.tokenizer.parse('function () { let a = 1; }')
-    console.log(this.tokenizer.tokens)
-  }
+  // prettier-ignore
+  initialCode =
+`let a = 1.1e10;
+// comment
+/* comment
+    comment **/
+`
 
   render() {
     const { tokens } = this.state
     return (
       <>
-        <CodeMirror config={{ lineNumbers: true }} onChange={(e: any) => {}} />
+        <CodeMirror
+          config={{ lineNumbers: true }}
+          onChange={(e: any) => {
+            this.tokenizer.parse(e.getDoc().getValue())
+            this.setState({ tokens: this.tokenizer.tokens })
+          }}
+          initialValue={this.initialCode}
+        />
+        <ul>
+          {tokens.map((t, i) => (
+            <li key={i}>
+              {t.value} Start: {t.loc.start.line + 1},{t.loc.start.column + 1} End:{t.loc.end.line + 1},{t.loc.end
+                .column + 1}{' '}
+              Type: {t.type}
+            </li>
+          ))}
+        </ul>
       </>
     )
   }
