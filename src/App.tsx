@@ -13,7 +13,7 @@ export default class App extends React.Component {
       'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue', 'debugger',
       'default', 'delete', 'do', 'double', 'else', 'enum', 'export', 'extends', 'false', 'final',
       'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import', 'in',
-      'instanceof', 'int', 'interface', 'long', 'native', 'new', 'null', 'package', 'private',
+      'instanceof', 'int', 'interface', 'let','long', 'native', 'new', 'null', 'package', 'private',
       'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized', 'this',
       'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while',
       'with'
@@ -30,12 +30,19 @@ export default class App extends React.Component {
       '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=',
       '^=', '%=', '<<=', '>>=', '>>>='
     ],
+    symbols: /[~!@#%\^&*-+=|\\:`<>.?\/]+/,
     exponent: /[eE][\-+]?[0-9]+/,
     tokenizer: {
       root: [
-        [/[a-zA-Z_\$][\w\$]*/, 'IDENTIFIER'],
-        [/[{}()\[\]]/, 'BRACKETS'],
+        // strings
+        [/".*"/, 'STRING'],
+        [/'.*'/, 'STRING'],
+        [/`[.\S\W]*`/, 'STRING'],
+        // identifiers
+        [/[a-zA-Z_\$][\w\$]*/, { cases: { '@keywords': 'KEYWORD', '@default': 'IDENTIFIER' } }],
+        [/[{}()\[\]]/, 'BRACKET'],
         [/[;,.]/, 'DELIMITER'],
+        [/@symbols/, { cases: { '@operators': 'OPERATOR', '@default': '' } }],
         // numbers
         [/\d+\.\d*(?:@exponent)?/, 'NUMBER.FLOAT'],
         [/\.\d+(?:@exponent)?/, 'NUMBER.FLOAT'],
@@ -53,6 +60,11 @@ export default class App extends React.Component {
   // prettier-ignore
   initialCode =
 `let a = 1.1e10;
+let s1 = "string\\""
+var s2 = 'wow'
+const s3 = \`multiple
+line\`
+if (a >= 1) console.log(s3)
 // comment
 /* comment
     comment **/
