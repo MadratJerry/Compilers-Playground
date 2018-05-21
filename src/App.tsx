@@ -1,11 +1,33 @@
 import CodeMirror from '@/components/CodeMirror'
 import Tokenizer, { Token } from '@/tokenizer'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemText from '@material-ui/core/ListItemText'
+import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
+import { Editor, TextMarker } from 'codemirror'
 import * as React from 'react'
 
-export default class App extends React.Component {
-  state: { tokens: Array<Token> } = {
+const styles = (theme: Theme) => ({
+  root: {
+    display: 'flex',
+    width: '100%',
+    height: '100%',
+    backgroundColor: theme.palette.background.paper,
+    justifyContent: 'space-between',
+  },
+  list: {
+    overflow: 'scroll',
+    width: '50%',
+  },
+})
+
+class App extends React.Component<WithStyles<'root' | 'list'>> {
+  state: { tokens: Array<Token>; editor: Editor } = {
     tokens: [],
+    editor: null,
   }
+
+  textMarker: TextMarker
 
   tokenizer: Tokenizer = new Tokenizer({
     // prettier-ignore
@@ -37,6 +59,9 @@ export default class App extends React.Component {
         // strings
         [/".*"/, 'STRING'],
         [/'.*'/, 'STRING'],
+        // comment
+        [/\/\/.*\n/, 'COMMENT'],
+        [/\/\*[.\S\W]*\*\//, 'COMMENT'],
         [/`[.\S\W]*`/, 'STRING'],
         // identifiers
         [/[a-zA-Z_\$][\w\$]*/, { cases: { '@keywords': 'KEYWORD', '@default': 'IDENTIFIER' } }],
@@ -50,9 +75,6 @@ export default class App extends React.Component {
         [/0[xX][\da-fA-F]+/, 'NUMBER.HEX'],
         [/0[0-7]+/, 'NUMBER.OCTAL'],
         [/\d+/, 'NUMBER'],
-        // comment
-        [/\/\/.*\n/, 'COMMENT'],
-        [/\/\*[.\S\W]*\*\//, 'COMMENT'],
       ],
     },
   })
@@ -69,11 +91,26 @@ if (a >= 1) console.log(s3)
 /* comment
     comment **/
 `
+  getInstance = (editor: Editor) => {
+    this.setState({ editor })
+  }
+
+  handleEnter = (index: number) => () => {
+    const { editor, tokens } = this.state
+    const {
+      loc: { start, end },
+    } = tokens[index]
+    this.textMarker = editor
+      .getDoc()
+      .markText({ line: start.line, ch: start.column }, { line: end.line, ch: end.column }, { className: 'inlineMark' })
+  }
 
   render() {
     const { tokens } = this.state
+    const { classes } = this.props
+
     return (
-      <>
+      <div className={classes.root}>
         <CodeMirror
           config={{ lineNumbers: true }}
           onChange={(e: any) => {
@@ -81,17 +118,20 @@ if (a >= 1) console.log(s3)
             this.setState({ tokens: this.tokenizer.tokens })
           }}
           initialValue={this.initialCode}
+          returnInstance={this.getInstance}
         />
-        <ul>
+        <List className={classes.list}>
           {tokens.map((t, i) => (
-            <li key={i}>
-              {t.value} Start: {t.loc.start.line + 1},{t.loc.start.column + 1} End:{t.loc.end.line + 1},{t.loc.end
-                .column + 1}{' '}
-              Type: {t.type}
-            </li>
+            <ListItem key={i} button dense onMouseOver={this.handleEnter(i)} onMouseOut={() => this.textMarker.clear()}>
+              <ListItemText primary={t.value} secondary={t.type} />
+              {/* {t.value} Start: {t.loc.start.line + 1},{t.loc.start.column + 1} End:{t.loc.end.line + 1},{t.loc.end
+                .column + 1} Type: {t.type} */}
+            </ListItem>
           ))}
-        </ul>
-      </>
+        </List>
+      </div>
     )
   }
 }
+
+export default withStyles(styles)(App)
