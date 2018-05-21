@@ -1,4 +1,5 @@
 import CodeMirror from '@/components/CodeMirror'
+import { GrammarParser } from '@/lib/parser'
 import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import { Editor } from 'codemirror'
 import * as React from 'react'
@@ -15,7 +16,14 @@ class TokenizerGround extends React.Component<WithStyles<'root'>> {
 
   // prettier-ignore
   initialCode: string =
-``
+`e
+    : e "+" t
+    | t
+    ;
+
+t
+    : ZERO
+;`
 
   render() {
     const { classes } = this.props
@@ -24,7 +32,9 @@ class TokenizerGround extends React.Component<WithStyles<'root'>> {
       <div className={classes.root}>
         <CodeMirror
           config={{ lineNumbers: true }}
-          onChange={(e: any) => {}}
+          onChange={(e: Editor) => {
+            new GrammarParser(e.getDoc().getValue())
+          }}
           initialValue={this.initialCode}
           returnInstance={(editor: Editor) => (this.editor = editor)}
         />

@@ -1,4 +1,4 @@
-import * as Types from '@/types'
+import * as Types from '@/lib/types'
 
 class Token implements Types.Token {
   type: string

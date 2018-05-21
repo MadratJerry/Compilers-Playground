@@ -60,10 +60,10 @@ class TokenizerGround extends React.Component<WithStyles<'root' | 'list'>> {
         // strings
         [/".*"/, 'STRING'],
         [/'.*'/, 'STRING'],
+        [/`[.\S\W]*`/, 'STRING'],
         // comment
         [/\/\/.*\n/, 'COMMENT'],
         [/\/\*[.\S\W]*\*\//, 'COMMENT'],
-        [/`[.\S\W]*`/, 'STRING'],
         // identifiers
         [/[a-zA-Z_\$][\w\$]*/, { cases: { '@keywords': 'KEYWORD', '@default': 'IDENTIFIER' } }],
         [/[{}()\[\]]/, 'BRACKET'],
