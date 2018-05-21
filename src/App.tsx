@@ -2,6 +2,7 @@ import FAGround from '@/components/FAGround'
 import ParserGround from '@/components/ParserGround'
 import TokenizerGround from '@/components/TokenizerGround'
 import AppBar from '@material-ui/core/AppBar'
+import Card from '@material-ui/core/Card'
 import Tab from '@material-ui/core/Tab'
 import Tabs from '@material-ui/core/Tabs'
 import Typography from '@material-ui/core/Typography'
@@ -12,7 +13,7 @@ import SwipeableViews from 'react-swipeable-views'
 function TabContainer({ children, dir }: { children: any; dir: any }) {
   return (
     <Typography component="div" dir={dir} style={{ padding: 8 * 3 }}>
-      {children}
+      <Card style={{ height: 700, overflow: 'scroll' }}>{children}</Card>
     </Typography>
   )
 }

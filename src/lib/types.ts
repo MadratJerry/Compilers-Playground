@@ -17,3 +17,13 @@ export interface Position {
 export interface Token extends Node {
   value: string
 }
+
+export type RuleTerm = { type: string; value: string } | string
+
+export type Rule = Array<RuleTerm>
+
+export type Rules = Array<Rule>
+
+export type RuleMap = Map<string, Rules>
+
+export type Production = [string]

@@ -9,3 +9,7 @@ body,
 .inlineMark {
   background: #eee;
 }
+
+.CodeMirror {
+  height: 700px;
+}

@@ -1,15 +1,15 @@
 import Tokenizer from '@/lib/tokenizer'
-import { Token } from '@/lib/types'
+import { RuleMap, Token } from '@/lib/types'
 
 class GrammarParser {
   text: string
   index: number = 0
-  ruleMap: Map<string, Array<Array<string>>> = new Map()
+  ruleMap: RuleMap = new Map()
   tokenizer: Tokenizer = new Tokenizer({
     tokenizer: {
       root: [
         [/".*"/, 'STRING'],
-        [/[a-z_\$][\w\$]*/, 'TERMINAL'],
+        [/[a-z_\$'][\w\$']*/, 'TERMINAL'],
         [/[A-Z_\$][\w\$]*/, 'NONTERMINAL'],
         [/[:|;]/, 'OPERATOR'],
       ],
@@ -69,7 +69,7 @@ class GrammarParser {
       term.push(
         this.lookahead().type === 'STRING'
           ? JSON.parse(`{"value":${this.lookahead().value}}`).value
-          : this.lookahead().value,
+          : { type: this.lookahead().type, value: this.lookahead().value },
       )
       this.next()
     }
