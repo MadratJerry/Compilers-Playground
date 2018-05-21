@@ -1,5 +1,8 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
+import { Firsts } from '@/lib/types'
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
 import Step from '@material-ui/core/Step'
 import StepContent from '@material-ui/core/StepContent'
 import StepLabel from '@material-ui/core/StepLabel'
@@ -43,8 +46,8 @@ function getStepContent(step: number) {
   }
 }
 
-class TokenizerGround extends React.Component<WithStyles<'root' | 'stepper'>> {
-  state = { activeStep: 0 }
+class TokenizerGround extends React.Component<WithStyles<'root' | 'stepper'>, { activeStep: number; firsts: Firsts }> {
+  state = { activeStep: 0, firsts: new Map() }
   editor: Editor
 
   // prettier-ignore
@@ -54,25 +57,27 @@ class TokenizerGround extends React.Component<WithStyles<'root' | 'stepper'>> {
     | t
     ;
 
-t   : e
+t   : ONE
     | ZERO
     ;`
+
+  onEditorChange = (e: Editor) => {
+    const gp = new GrammarParser(e.getDoc().getValue())
+    const ll = new LL(gp.ruleMap)
+    const activeHash = [!ll.isRecursive]
+    this.setState({ activeStep: activeHash.filter(a => a).length, firsts: ll.firsts })
+  }
 
   render() {
     const { classes } = this.props
     const steps = getSteps()
-    const { activeStep } = this.state
+    const { activeStep, firsts } = this.state
 
     return (
       <div className={classes.root}>
         <CodeMirror
           config={{ lineNumbers: true }}
-          onChange={(e: Editor) => {
-            this.setState({ activeStep: 0 })
-            const gp = new GrammarParser(e.getDoc().getValue())
-            const ll = new LL(gp.ruleMap)
-            if (!ll.isRecursive) this.setState({ activeStep: 1 })
-          }}
+          onChange={this.onEditorChange}
           initialValue={this.initialCode}
           returnInstance={(editor: Editor) => (this.editor = editor)}
         />
@@ -89,6 +94,24 @@ t   : e
               )
             })}
           </Stepper>
+          <h2>Nonterminals</h2>
+          {((firsts: Firsts) => {
+            const array = []
+            for (const f of firsts) {
+              const firstList: Array<string> = []
+              f[1].forEach(s => firstList.push(typeof s === 'string' ? s : s.value))
+              array.push(
+                <Card key={f[0]}>
+                  <CardContent>
+                    <h3>{f[0]}</h3>
+                    <p>Firsts: {firstList.join(', ')}</p>
+                  </CardContent>
+                </Card>,
+              )
+            }
+            return array
+          })(firsts)}
+          <Typography />
         </div>
       </div>
     )

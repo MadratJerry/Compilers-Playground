@@ -9,8 +9,8 @@ class GrammarParser {
     tokenizer: {
       root: [
         [/".*"/, 'STRING'],
-        [/[a-z_\$'][\w\$']*/, 'TERMINAL'],
-        [/[A-Z_\$][\w\$]*/, 'NONTERMINAL'],
+        [/[a-z_\$'][\w\$']*/, 'NONTERMINAL'],
+        [/[A-Z_\$][\w\$]*/, 'TERMINAL'],
         [/[:|;]/, 'OPERATOR'],
       ],
     },
@@ -24,7 +24,7 @@ class GrammarParser {
 
   rule() {
     let left = ''
-    if (this.lookahead().type === 'TERMINAL') {
+    if (this.lookahead().type === 'NONTERMINAL') {
       left = this.lookahead().value
       if (this.next().value === ':') {
         this.next()

@@ -112,7 +112,7 @@ if (a >= 1) console.log(s3)
       <div className={classes.root}>
         <CodeMirror
           config={{ lineNumbers: true }}
-          onChange={(e: any) => {
+          onChange={(e: Editor) => {
             this.tokenizer.parse(e.getDoc().getValue())
             this.setState({ tokens: this.tokenizer.tokens })
           }}
@@ -123,8 +123,6 @@ if (a >= 1) console.log(s3)
           {tokens.map((t, i) => (
             <ListItem key={i} button dense onMouseOver={this.handleEnter(i)} onMouseOut={() => this.textMarker.clear()}>
               <ListItemText primary={t.value} secondary={t.type} />
-              {/* {t.value} Start: {t.loc.start.line + 1},{t.loc.start.column + 1} End:{t.loc.end.line + 1},{t.loc.end
-                .column + 1} Type: {t.type} */}
             </ListItem>
           ))}
         </List>

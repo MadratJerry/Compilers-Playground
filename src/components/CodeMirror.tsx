@@ -3,10 +3,11 @@ import 'codemirror/lib/codemirror.css'
 import * as React from 'react'
 
 interface P {
-  config: codemirror.EditorConfiguration
-  onChange: any
-  initialValue: string
-  returnInstance: (editor: codemirror.Editor) => any
+  height?: string
+  config?: codemirror.EditorConfiguration
+  onChange?: any
+  initialValue?: string
+  returnInstance?: (editor: codemirror.Editor) => any
 }
 export default class CodeMirror extends React.Component<P> {
   editor: any
@@ -17,9 +18,12 @@ export default class CodeMirror extends React.Component<P> {
   }
 
   componentDidMount() {
-    const editor = codemirror(e => this.editor.current.appendChild(e), this.props.config)
-    editor.on('change', this.props.onChange)
-    editor.getDoc().setValue(this.props.initialValue)
+    const { height = '100%', config = {}, onChange = () => {}, initialValue = '' } = this.props
+    this.editor.current.style.height = height
+    this.editor.current.style.overflow = 'scroll'
+    const editor = codemirror(e => this.editor.current.appendChild(e), config)
+    editor.on('change', onChange)
+    editor.getDoc().setValue(initialValue)
 
     this.props.returnInstance(editor)
   }
