@@ -1,5 +1,5 @@
 import CodeMirror from '@/components/CodeMirror'
-import Tokenizer, { Token } from '@/tokenizer'
+import Tokenizer, { Token } from '@/lib/tokenizer'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
@@ -22,10 +22,11 @@ const styles = (theme: Theme) => ({
 })
 
 class TokenizerGround extends React.Component<WithStyles<'root' | 'list'>> {
-  state: { tokens: Array<Token>; editor: Editor } = {
+  state: { tokens: Array<Token> } = {
     tokens: [],
-    editor: null,
   }
+
+  editor: Editor
 
   textMarker: TextMarker
 
@@ -91,12 +92,10 @@ if (a >= 1) console.log(s3)
 /* comment
     comment **/
 `
-  getInstance = (editor: Editor) => {
-    this.setState({ editor })
-  }
 
   handleEnter = (index: number) => () => {
-    const { editor, tokens } = this.state
+    const { editor } = this
+    const { tokens } = this.state
     const {
       loc: { start, end },
     } = tokens[index]
@@ -118,7 +117,7 @@ if (a >= 1) console.log(s3)
             this.setState({ tokens: this.tokenizer.tokens })
           }}
           initialValue={this.initialCode}
-          returnInstance={this.getInstance}
+          returnInstance={(editor: Editor) => (this.editor = editor)}
         />
         <List className={classes.list}>
           {tokens.map((t, i) => (

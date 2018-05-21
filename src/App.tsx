@@ -1,4 +1,5 @@
-import FAGraph from '@/components/FAGraph'
+import FAGround from '@/components/FAGround'
+import ParserGround from '@/components/ParserGround'
 import TokenizerGround from '@/components/TokenizerGround'
 import AppBar from '@material-ui/core/AppBar'
 import Tab from '@material-ui/core/Tab'
@@ -20,12 +21,13 @@ const styles = (theme: Theme) => ({
   root: {
     backgroundColor: theme.palette.background.paper,
     width: '100%',
+    height: '100%',
   },
 })
 
 class App extends React.Component<WithStyles<'root'>> {
   state = {
-    value: 0,
+    value: 2,
   }
 
   handleChange = (event: any, value: any) => {
@@ -60,12 +62,14 @@ class App extends React.Component<WithStyles<'root'>> {
           onChangeIndex={this.handleChangeIndex}
         >
           <TabContainer dir={theme.direction}>
-            <FAGraph />
+            <FAGround />
           </TabContainer>
           <TabContainer dir={theme.direction}>
             <TokenizerGround />
           </TabContainer>
-          <TabContainer dir={theme.direction}>Item Three</TabContainer>
+          <TabContainer dir={theme.direction}>
+            <ParserGround />
+          </TabContainer>
         </SwipeableViews>
       </div>
     )
