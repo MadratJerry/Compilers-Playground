@@ -18,7 +18,7 @@ export interface Token extends Node {
   value: string
 }
 
-export type RuleTerm = { type: string; value: string } | string
+export type RuleTerm = string
 
 export type Rule = Array<RuleTerm>
 
@@ -31,3 +31,7 @@ export type Production = [string, Array<RuleTerm>]
 export type Firsts = Map<string, Set<RuleTerm>>
 
 export type Follows = Map<string, Set<RuleTerm>>
+
+export type SymbolTable = Map<string, string>
+
+export const epsilon = 'ε'

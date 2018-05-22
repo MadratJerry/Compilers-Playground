@@ -3,12 +3,17 @@ import { GrammarParser, LL } from '@/lib/parser'
 import { Firsts, Follows, Production } from '@/lib/types'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemIcon from '@material-ui/core/ListItemIcon'
+import ListItemText from '@material-ui/core/ListItemText'
 import Step from '@material-ui/core/Step'
 import StepContent from '@material-ui/core/StepContent'
 import StepLabel from '@material-ui/core/StepLabel'
 import Stepper from '@material-ui/core/Stepper'
 import Typography from '@material-ui/core/Typography'
 import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
+import ErrorIcon from '@material-ui/icons/Error'
 import { Editor } from 'codemirror'
 import * as React from 'react'
 
@@ -51,9 +56,15 @@ function getStepContent(step: number) {
 
 class TokenizerGround extends React.Component<
   WithStyles<'root' | 'stepper'>,
-  { activeStep: number; firsts: Firsts; follows: Follows; productions: Array<Production> }
+  { activeStep: number; firsts: Firsts; follows: Follows; productions: Array<Production>; errors: Array<string> }
 > {
-  state = { activeStep: 0, firsts: new Map(), follows: new Map(), productions: [] as Array<Production> }
+  state = {
+    activeStep: 0,
+    firsts: new Map(),
+    follows: new Map(),
+    productions: [] as Array<Production>,
+    errors: [] as Array<string>,
+  }
   editor: Editor
 
   // prettier-ignore
@@ -68,30 +79,50 @@ t   : ONE
     ;`
 
   onEditorChange = (e: Editor) => {
-    const gp = new GrammarParser(e.getDoc().getValue())
-    const ll = new LL(gp.ruleMap)
+    let gp
+    try {
+      gp = new GrammarParser(e.getDoc().getValue())
+    } catch (e) {
+      this.setState({ errors: e })
+      return
+    }
+    const ll = new LL(gp.ruleMap, gp.symbolTable)
     const activeHash = [!ll.isRecursive]
     this.setState({
       activeStep: activeHash.filter(a => a).length,
       firsts: ll.firsts,
       follows: ll.follows,
       productions: ll.productions,
+      errors: [],
     })
   }
 
   render() {
     const { classes } = this.props
     const steps = getSteps()
-    const { activeStep, firsts, follows, productions } = this.state
+    const { activeStep, firsts, follows, productions, errors } = this.state
 
     return (
       <div className={classes.root}>
-        <CodeMirror
-          config={{ lineNumbers: true }}
-          onChange={this.onEditorChange}
-          initialValue={this.initialCode}
-          returnInstance={(editor: Editor) => (this.editor = editor)}
-        />
+        <div>
+          <CodeMirror
+            height="auto"
+            config={{ lineNumbers: true }}
+            onChange={this.onEditorChange}
+            initialValue={this.initialCode}
+            returnInstance={(editor: Editor) => (this.editor = editor)}
+          />
+          <List dense>
+            {errors.map((e, i) => (
+              <ListItem key={i}>
+                <ListItemIcon>
+                  <ErrorIcon color="error" />
+                </ListItemIcon>
+                <ListItemText primary={e} />
+              </ListItem>
+            ))}
+          </List>
+        </div>
         <div className={classes.stepper}>
           <Stepper activeStep={activeStep} orientation="vertical">
             {steps.map((label, index) => {
@@ -111,8 +142,8 @@ t   : ONE
             for (const f of firsts) {
               const firstList: Array<string> = []
               const followList: Array<string> = []
-              f[1].forEach(s => firstList.push(typeof s === 'string' ? s : s.value))
-              follows.get(f[0]).forEach(s => followList.push(typeof s === 'string' ? s : s.value))
+              f[1].forEach(s => firstList.push(s))
+              follows.get(f[0]).forEach(s => followList.push(s))
               array.push(
                 <Card key={f[0]}>
                   <CardContent>

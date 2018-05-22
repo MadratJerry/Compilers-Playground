@@ -1,11 +1,13 @@
 import Tokenizer from '@/lib/tokenizer'
-import { RuleMap, Token } from '@/lib/types'
+import { RuleMap, SymbolTable, Token, epsilon } from '@/lib/types'
+
+const start: string = '$accept'
+const end: string = '$end'
 
 class GrammarParser {
-  text: string
-  index: number = 0
-  ruleMap: RuleMap = new Map()
-  tokenizer: Tokenizer = new Tokenizer({
+  private text: string
+  private index: number = 0
+  private tokenizer: Tokenizer = new Tokenizer({
     tokenizer: {
       root: [
         [/".*"/, 'STRING'],
@@ -15,16 +17,37 @@ class GrammarParser {
       ],
     },
   })
+  ruleMap: RuleMap = new Map()
+  symbolTable: SymbolTable = new Map()
+  leftSet: Set<string> = new Set([start])
 
   constructor(text: string) {
     this.text = text
     this.tokenizer.parse(text)
+    this.ruleMap.set(start, [['']])
+    this.symbolTable.set(start, 'NONTERMINAL')
+    this.symbolTable.set(end, 'TERMINAL')
     this.rules()
+    // Add start -> first nonterminal
+    const ri = this.ruleMap.keys()
+    ri.next()
+    this.ruleMap.set(start, [[ri.next().value, end]])
+    // Check whether defined
+    const errors: Array<string> = []
+    this.symbolTable.forEach((v, k) => {
+      if (v === 'NONTERMINAL' && !this.leftSet.has(k)) errors.push(`'${k}' is not defined`)
+    })
+    if (errors.length) throw errors
+  }
+
+  addToST(t: Token) {
+    this.symbolTable.set(t.value, t.type)
   }
 
   rule() {
     let left = ''
     if (this.lookahead().type === 'NONTERMINAL') {
+      this.addToST(this.lookahead())
       left = this.lookahead().value
       if (this.next().value === ':') {
         this.next()
@@ -32,6 +55,7 @@ class GrammarParser {
         if (expr) {
           if (this.lookahead().value === ';') {
             this.ruleMap.set(left, expr)
+            this.leftSet.add(left)
             return true
           }
         }
@@ -66,15 +90,17 @@ class GrammarParser {
       this.lookahead().type === 'NONTERMINAL' ||
       this.lookahead().type === 'STRING'
     ) {
-      term.push(
+      const value =
         this.lookahead().type === 'STRING'
           ? JSON.parse(`{"value":${this.lookahead().value}}`).value
-          : { type: this.lookahead().type, value: this.lookahead().value },
-      )
+          : this.lookahead().value
+      term.push(value)
+      this.addToST(this.lookahead())
       this.next()
     }
-    if (this.lookahead().type === 'OPERATOR') return term
-    else return null
+    if (this.lookahead().type === 'OPERATOR') {
+      return term.length ? term : [epsilon]
+    } else return null
   }
 
   lookahead(): Token | any {
@@ -87,3 +113,5 @@ class GrammarParser {
 }
 
 export default GrammarParser
+
+export { start, end }

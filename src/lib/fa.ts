@@ -1,6 +1,5 @@
+import { epsilon } from '@/lib/types'
 import Graph, { Vertex } from './graph'
-
-const epsilon = 'ε'
 
 class State extends Vertex<number> {
   label: number
