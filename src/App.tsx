@@ -8,6 +8,7 @@ import Tabs from '@material-ui/core/Tabs'
 import Typography from '@material-ui/core/Typography'
 import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
+import { hot } from 'react-hot-loader'
 import SwipeableViews from 'react-swipeable-views'
 
 function TabContainer({ children, dir }: { children: any; dir: any }) {
@@ -77,4 +78,4 @@ class App extends React.Component<WithStyles<'root'>> {
   }
 }
 
-export default withStyles(styles, { withTheme: true })(App)
+export default hot(module)(withStyles(styles, { withTheme: true })(App))

@@ -15,7 +15,19 @@ const config = {
   },
   module: {
     rules: [
-      { test: /\.tsx?$/, loader: 'awesome-typescript-loader' },
+      {
+        test: /\.tsx?$/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              babelrc: false,
+              plugins: ['react-hot-loader/babel'],
+            },
+          },
+          'awesome-typescript-loader',
+        ],
+      },
       { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
     ],
@@ -32,6 +44,8 @@ const config = {
     }),
   ],
   devServer: {
+    hot: true,
+    inline: true,
     contentBase: OUTPUT_PATH,
     compress: true,
     port: 3000,
