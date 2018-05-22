@@ -1,9 +1,10 @@
 import Graph from '@/lib/graph'
-import { Firsts, Follows, Production, RuleMap, RuleTerm, SymbolTable, epsilon } from '@/lib/types'
+import { Firsts, Follows, ForecastingTable, Production, RuleMap, RuleTerm, SymbolTable, epsilon } from '@/lib/types'
 
 class LL {
   map: RuleMap
-  table: SymbolTable
+  symbolTable: SymbolTable
+  forecastingTable: ForecastingTable = new Map()
   productions: Array<Production> = []
   firsts: Firsts = new Map()
   follows: Follows = new Map()
@@ -12,12 +13,26 @@ class LL {
 
   constructor(map: RuleMap, table: SymbolTable) {
     this.map = map
-    this.table = table
+    this.symbolTable = table
     this.isRecursive = this.checkRecursive()
     if (!this.isRecursive) {
       this.makeProductions()
       this.firstSet()
       this.followSet()
+      this.createForecastTable()
+    }
+  }
+
+  private createForecastTable() {
+    const terminals = [...this.symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
+    for (const t of [...this.symbolTable].filter(e => e[1] === 'NONTERMINAL'))
+      this.forecastingTable.set(t[0], new Map(terminals.map(t => [t[0], []] as any)))
+    for (const p of this.productions) {
+      const first = this.getFirst(p[1])
+      const follow = this.getFollow(p[0])
+      if (first.has(epsilon))
+        for (const t of terminals) if (follow.has(t[0])) this.forecastingTable.get(p[0]).set(t[0], p)
+      for (const t of terminals) if (first.has(t[0])) this.forecastingTable.get(p[0]).set(t[0], p)
     }
   }
 
@@ -49,7 +64,8 @@ class LL {
         for (let i = 0; i < rule.length; i++) {
           const t = rule[i]
           if (t === term) {
-            const firsts = this.getFirst(rule.splice(i + 1, rule.length - i - 1))
+            // splice has side effect
+            const firsts = this.getFirst([...rule].splice(i + 1, rule.length - i - 1))
             for (const f of firsts) follow.add(f)
             if (firsts.has(epsilon)) for (const f of this.getFollow(a[0])) follow.add(f)
             follow.delete(epsilon)
@@ -65,7 +81,7 @@ class LL {
       if (term.length) return this.getFirst(term[0])
       else return new Set([epsilon])
     }
-    if (this.table.get(term) === 'STRING' || this.table.get(term) === 'TERMINAL' || term === epsilon)
+    if (this.symbolTable.get(term) === 'STRING' || this.symbolTable.get(term) === 'TERMINAL' || term === epsilon)
       return new Set([term])
     const first = this.firsts.get(term)
     if (first.size) return first
@@ -84,7 +100,7 @@ class LL {
     for (const a of this.map) {
       for (const rule of a[1]) {
         const t = rule[0]
-        if (t && this.table.get(t) === 'NONTERMINAL') graph.addEdge(a[0], t, '')
+        if (t && this.symbolTable.get(t) === 'NONTERMINAL') graph.addEdge(a[0], t, '')
       }
     }
     const stack = []

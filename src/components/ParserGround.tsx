@@ -1,16 +1,22 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
-import { Firsts, Follows, Production } from '@/lib/types'
+import { Firsts, Follows } from '@/lib/types'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
+import Paper from '@material-ui/core/Paper'
 import Step from '@material-ui/core/Step'
 import StepContent from '@material-ui/core/StepContent'
 import StepLabel from '@material-ui/core/StepLabel'
 import Stepper from '@material-ui/core/Stepper'
+import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableHead from '@material-ui/core/TableHead'
+import TableRow from '@material-ui/core/TableRow'
 import Typography from '@material-ui/core/Typography'
 import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import ErrorIcon from '@material-ui/icons/Error'
@@ -56,13 +62,15 @@ function getStepContent(step: number) {
 
 class TokenizerGround extends React.Component<
   WithStyles<'root' | 'stepper'>,
-  { activeStep: number; firsts: Firsts; follows: Follows; productions: Array<Production>; errors: Array<string> }
+  {
+    activeStep: number
+    ll: LL
+    errors: Array<string>
+  }
 > {
   state = {
     activeStep: 0,
-    firsts: new Map(),
-    follows: new Map(),
-    productions: [] as Array<Production>,
+    ll: new LL(new Map(), new Map()),
     errors: [] as Array<string>,
   }
   editor: Editor
@@ -100,9 +108,7 @@ f   : "(" e ")"
     const activeHash = [!ll.isRecursive]
     this.setState({
       activeStep: activeHash.filter(a => a).length,
-      firsts: ll.firsts,
-      follows: ll.follows,
-      productions: ll.productions,
+      ll: ll,
       errors: [],
     })
   }
@@ -110,69 +116,107 @@ f   : "(" e ")"
   render() {
     const { classes } = this.props
     const steps = getSteps()
-    const { activeStep, firsts, follows, productions, errors } = this.state
+    const {
+      activeStep,
+      ll: { firsts, follows, productions, forecastingTable, symbolTable },
+      errors,
+    } = this.state
+    const terminals = [...symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
 
     return (
-      <div className={classes.root}>
-        <div>
-          <CodeMirror
-            height="auto"
-            config={{ lineNumbers: true }}
-            onChange={this.onEditorChange}
-            initialValue={this.initialCode}
-            returnInstance={(editor: Editor) => (this.editor = editor)}
-          />
-          <List dense>
-            {errors.map((e, i) => (
-              <ListItem key={i}>
-                <ListItemIcon>
-                  <ErrorIcon color="error" />
-                </ListItemIcon>
-                <ListItemText primary={e} />
-              </ListItem>
-            ))}
-          </List>
+      <>
+        <div className={classes.root}>
+          <div>
+            <CodeMirror
+              height="auto"
+              config={{ lineNumbers: true }}
+              onChange={this.onEditorChange}
+              initialValue={this.initialCode}
+              returnInstance={(editor: Editor) => (this.editor = editor)}
+            />
+            <List dense>
+              {errors.map((e, i) => (
+                <ListItem key={i}>
+                  <ListItemIcon>
+                    <ErrorIcon color="error" />
+                  </ListItemIcon>
+                  <ListItemText primary={e} />
+                </ListItem>
+              ))}
+            </List>
+          </div>
+          <div className={classes.stepper}>
+            <Stepper activeStep={activeStep} orientation="vertical">
+              {steps.map((label, index) => {
+                return (
+                  <Step key={label}>
+                    <StepLabel error={activeStep === index}>{label}</StepLabel>
+                    <StepContent>
+                      <Typography>{getStepContent(index)}</Typography>
+                    </StepContent>
+                  </Step>
+                )
+              })}
+            </Stepper>
+            <h2>Nonterminals</h2>
+            {((firsts: Firsts, follows: Follows) => {
+              const array = []
+              for (const f of firsts) {
+                array.push(
+                  <Card key={f[0]} style={{ margin: 10 }}>
+                    <CardContent>
+                      <h3>{f[0]}</h3>
+                      <p>FIRST: {`{${[...f[1]].join(', ')}}`}</p>
+                      <p>FOLLOW: {`{${[...follows.get(f[0])].join(', ')}}`}</p>
+                    </CardContent>
+                  </Card>,
+                )
+              }
+              return array
+            })(firsts, follows)}
+            <h2>Productions</h2>
+            <ul>
+              {productions.map((p, i) => (
+                <li key={i}>
+                  {i}. {p[0]} -> {p[1].join(' ')}
+                </li>
+              ))}
+            </ul>
+            <Typography />
+          </div>
         </div>
-        <div className={classes.stepper}>
-          <Stepper activeStep={activeStep} orientation="vertical">
-            {steps.map((label, index) => {
-              return (
-                <Step key={label}>
-                  <StepLabel error={activeStep === index}>{label}</StepLabel>
-                  <StepContent>
-                    <Typography>{getStepContent(index)}</Typography>
-                  </StepContent>
-                </Step>
-              )
-            })}
-          </Stepper>
-          <h2>Nonterminals</h2>
-          {((firsts: Firsts, follows: Follows) => {
-            const array = []
-            for (const f of firsts) {
-              array.push(
-                <Card key={f[0]}>
-                  <CardContent>
-                    <h3>{f[0]}</h3>
-                    <p>FIRST: {`{${[...f[1]].join(', ')}}`}</p>
-                    <p>FOLLOW: {`{${[...follows.get(f[0])].join(', ')}}`}</p>
-                  </CardContent>
-                </Card>,
-              )
-            }
-            return array
-          })(firsts, follows)}
-          <h2>Productions</h2>
-          <ul>
-            {productions.map((p, i) => (
-              <li key={i}>
-                {i}. {p[0]} -> {p[1].join(' ')}
-              </li>
-            ))}
-          </ul>
-          <Typography />
-        </div>
-      </div>
+        <Paper style={{ overflow: 'scroll', width: '100%' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                {terminals.map(e => <TableCell key={e[0]}>{e[0].padEnd(10, '　')}</TableCell>)}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...forecastingTable.entries()].map(n => {
+                return (
+                  <TableRow key={n[0]}>
+                    <TableCell component="th" scope="row">
+                      {n[0]}
+                    </TableCell>
+                    {terminals.map(t => {
+                      const p = n[1].get(t[0])
+                      return p.length ? (
+                        <TableCell key={t[0] + n[0]} style={{ width: '100%' }}>
+                          {p[0]} -> {p[1].join()}
+                        </TableCell>
+                      ) : (
+                        <TableCell key={t[0] + n[0]} />
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </Paper>
+      </>
     )
   }
 }

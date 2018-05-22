@@ -26,12 +26,14 @@ export type Rules = Array<Rule>
 
 export type RuleMap = Map<string, Rules>
 
-export type Production = [string, Array<RuleTerm>]
+export type Production = [string, Rule]
 
 export type Firsts = Map<string, Set<RuleTerm>>
 
 export type Follows = Map<string, Set<RuleTerm>>
 
 export type SymbolTable = Map<string, string>
+
+export type ForecastingTable = Map<string, Map<string, Production>>
 
 export const epsilon = 'ε'
