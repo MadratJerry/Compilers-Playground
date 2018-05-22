@@ -69,14 +69,24 @@ class TokenizerGround extends React.Component<
 
   // prettier-ignore
   initialCode: string =
-`e
-    : t "+" t
-    | t
+`
+e   : t e'
     ;
 
-t   : ONE
-    | ZERO
-    ;`
+e'  : "+" t e'
+    |
+    ;
+
+t   : f t'
+    ;
+
+t'  : "*" f t'
+    |
+    ;
+f   : "(" e ")"
+    | "i"
+    ;
+`
 
   onEditorChange = (e: Editor) => {
     let gp
@@ -140,21 +150,16 @@ t   : ONE
           {((firsts: Firsts, follows: Follows) => {
             const array = []
             for (const f of firsts) {
-              const firstList: Array<string> = []
-              const followList: Array<string> = []
-              f[1].forEach(s => firstList.push(s))
-              follows.get(f[0]).forEach(s => followList.push(s))
               array.push(
                 <Card key={f[0]}>
                   <CardContent>
                     <h3>{f[0]}</h3>
-                    <p>FIRST: {`{${firstList.join(', ')}}`}</p>
-                    <p>FOLLOW: {`{${followList.join(', ')}}`}</p>
+                    <p>FIRST: {`{${[...f[1]].join(', ')}}`}</p>
+                    <p>FOLLOW: {`{${[...follows.get(f[0])].join(', ')}}`}</p>
                   </CardContent>
                 </Card>,
               )
             }
-            array.sort((a: any, b: any) => (a.key < b.key ? -1 : 1))
             return array
           })(firsts, follows)}
           <h2>Productions</h2>

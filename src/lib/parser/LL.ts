@@ -1,5 +1,5 @@
 import Graph from '@/lib/graph'
-import { Firsts, Follows, Production, RuleMap, RuleTerm, SymbolTable } from '@/lib/types'
+import { Firsts, Follows, Production, RuleMap, RuleTerm, SymbolTable, epsilon } from '@/lib/types'
 
 class LL {
   map: RuleMap
@@ -44,19 +44,36 @@ class LL {
   private getFollow(term: string): Set<RuleTerm> {
     const follow = this.follows.get(term)
     if (follow.size) return follow
+    for (const a of this.map) {
+      for (const rule of a[1]) {
+        for (let i = 0; i < rule.length; i++) {
+          const t = rule[i]
+          if (t === term) {
+            const firsts = this.getFirst(rule.splice(i + 1, rule.length - i - 1))
+            for (const f of firsts) follow.add(f)
+            if (firsts.has(epsilon)) for (const f of this.getFollow(a[0])) follow.add(f)
+            follow.delete(epsilon)
+          }
+        }
+      }
+    }
+    return follow
   }
 
-  private getFirst(term: string): Set<RuleTerm> {
+  private getFirst(term: string | Array<string>): Set<RuleTerm> {
+    if (Array.isArray(term)) {
+      if (term.length) return this.getFirst(term[0])
+      else return new Set([epsilon])
+    }
+    if (this.table.get(term) === 'STRING' || this.table.get(term) === 'TERMINAL' || term === epsilon)
+      return new Set([term])
     const first = this.firsts.get(term)
     if (first.size) return first
     const rules = this.map.get(term)
     for (const rule of rules) {
       if (rule.length) {
         const t = rule[0]
-        if (this.table.get(t) === 'STRING' || this.table.get(t) === 'TERMINAL') first.add(t)
-        else if (this.table.get(t) === 'NONTERMINAL') {
-          this.getFirst(t).forEach(f => first.add(f))
-        }
+        this.getFirst(t).forEach(f => first.add(f))
       }
     }
     return first

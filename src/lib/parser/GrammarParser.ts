@@ -10,7 +10,7 @@ class GrammarParser {
   private tokenizer: Tokenizer = new Tokenizer({
     tokenizer: {
       root: [
-        [/".*"/, 'STRING'],
+        [/".*?"/, 'STRING'],
         [/[a-z_\$'][\w\$']*/, 'NONTERMINAL'],
         [/[A-Z_\$][\w\$]*/, 'TERMINAL'],
         [/[:|;]/, 'OPERATOR'],
@@ -40,8 +40,13 @@ class GrammarParser {
     if (errors.length) throw errors
   }
 
-  addToST(t: Token) {
-    this.symbolTable.set(t.value, t.type)
+  addToST(t: Token): string {
+    const value =
+      this.lookahead().type === 'STRING'
+        ? JSON.parse(`{"value":${this.lookahead().value}}`).value
+        : this.lookahead().value
+    this.symbolTable.set(value, t.type)
+    return value
   }
 
   rule() {
@@ -90,12 +95,7 @@ class GrammarParser {
       this.lookahead().type === 'NONTERMINAL' ||
       this.lookahead().type === 'STRING'
     ) {
-      const value =
-        this.lookahead().type === 'STRING'
-          ? JSON.parse(`{"value":${this.lookahead().value}}`).value
-          : this.lookahead().value
-      term.push(value)
-      this.addToST(this.lookahead())
+      term.push(this.addToST(this.lookahead()))
       this.next()
     }
     if (this.lookahead().type === 'OPERATOR') {
