@@ -1,6 +1,6 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
-import { Firsts } from '@/lib/types'
+import { Firsts, Follows, Production } from '@/lib/types'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import Step from '@material-ui/core/Step'
@@ -17,10 +17,13 @@ const styles = (theme: Theme) => ({
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
+    height: '100%',
     backgroundColor: theme.palette.background.paper,
   },
   stepper: {
     width: '50%',
+    height: '100%',
+    overflow: 'scroll',
   },
 })
 
@@ -46,8 +49,11 @@ function getStepContent(step: number) {
   }
 }
 
-class TokenizerGround extends React.Component<WithStyles<'root' | 'stepper'>, { activeStep: number; firsts: Firsts }> {
-  state = { activeStep: 0, firsts: new Map() }
+class TokenizerGround extends React.Component<
+  WithStyles<'root' | 'stepper'>,
+  { activeStep: number; firsts: Firsts; follows: Follows; productions: Array<Production> }
+> {
+  state = { activeStep: 0, firsts: new Map(), follows: new Map(), productions: [] as Array<Production> }
   editor: Editor
 
   // prettier-ignore
@@ -65,13 +71,18 @@ t   : ONE
     const gp = new GrammarParser(e.getDoc().getValue())
     const ll = new LL(gp.ruleMap)
     const activeHash = [!ll.isRecursive]
-    this.setState({ activeStep: activeHash.filter(a => a).length, firsts: ll.firsts })
+    this.setState({
+      activeStep: activeHash.filter(a => a).length,
+      firsts: ll.firsts,
+      follows: ll.follows,
+      productions: ll.productions,
+    })
   }
 
   render() {
     const { classes } = this.props
     const steps = getSteps()
-    const { activeStep, firsts } = this.state
+    const { activeStep, firsts, follows, productions } = this.state
 
     return (
       <div className={classes.root}>
@@ -95,22 +106,34 @@ t   : ONE
             })}
           </Stepper>
           <h2>Nonterminals</h2>
-          {((firsts: Firsts) => {
+          {((firsts: Firsts, follows: Follows) => {
             const array = []
             for (const f of firsts) {
               const firstList: Array<string> = []
+              const followList: Array<string> = []
               f[1].forEach(s => firstList.push(typeof s === 'string' ? s : s.value))
+              follows.get(f[0]).forEach(s => followList.push(typeof s === 'string' ? s : s.value))
               array.push(
                 <Card key={f[0]}>
                   <CardContent>
                     <h3>{f[0]}</h3>
-                    <p>Firsts: {firstList.join(', ')}</p>
+                    <p>FIRST: {`{${firstList.join(', ')}}`}</p>
+                    <p>FOLLOW: {`{${followList.join(', ')}}`}</p>
                   </CardContent>
                 </Card>,
               )
             }
+            array.sort((a: any, b: any) => (a.key < b.key ? -1 : 1))
             return array
-          })(firsts)}
+          })(firsts, follows)}
+          <h2>Productions</h2>
+          <ul>
+            {productions.map((p, i) => (
+              <li key={i}>
+                {i}. {p[0]} -> {p[1].join(' ')}
+              </li>
+            ))}
+          </ul>
           <Typography />
         </div>
       </div>

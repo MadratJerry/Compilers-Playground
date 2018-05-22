@@ -29,3 +29,5 @@ export type RuleMap = Map<string, Rules>
 export type Production = [string, Array<RuleTerm>]
 
 export type Firsts = Map<string, Set<RuleTerm>>
+
+export type Follows = Map<string, Set<RuleTerm>>
