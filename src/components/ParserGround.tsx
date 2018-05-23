@@ -179,7 +179,6 @@ f : "(" e ")" | DIGIT;
       lr: lr,
       errors: [],
     })
-    this.state.lr.parse(e.getDoc().getValue(), this.tokenizer)
   }
 
   render() {
@@ -241,6 +240,7 @@ f : "(" e ")" | DIGIT;
               config={{ lineNumbers: true }}
               onChange={(e: Editor) => {
                 this.setState({ result: this.state.ll.parse(e.getDoc().getValue(), this.tokenizer) })
+                this.state.lr.parse(e.getDoc().getValue(), this.tokenizer)
               }}
               initialValue={this.initialCode}
               returnInstance={(editor: Editor) => (this.codeEditor = editor)}

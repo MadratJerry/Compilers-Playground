@@ -16,6 +16,7 @@ class LR {
     this.map = map
     this.symbolTable = table
     if (map.size === 0 || table.size === 0) return
+    this.makeProductions()
     this.makeTerms()
     this.DFA()
     this.createAT()
@@ -36,20 +37,23 @@ class LR {
       const map = new Map()
       const s = this.setStack[i]
       const edges = this.setGraph.map.get(s)
-      if (edges.size) {
-        for (const e of edges) {
-          map.set(
-            e.weight,
-            `${this.symbolTable.get(e.weight) !== 'NONTERMINAL' ? 'S' : ''}${this.setStack.indexOf(e.to)}`,
-          )
-        }
-      } else {
-        const p = [...s.values()][0]
-        if ((p as Production & { index?: number }).index === 0) map.set(end, 'acc')
-        else
-          for (const t of terminals) {
-            map.set(t[0], `r${(p as Production & { index?: number }).index}`)
+      for (const p of s) {
+        const pn = this.getPost(p)
+        if (pn) {
+          for (const e of edges) {
+            map.set(
+              e.weight,
+              `${this.symbolTable.get(e.weight) !== 'NONTERMINAL' ? 'S' : ''}${this.setStack.indexOf(e.to)}`,
+            )
           }
+        } else {
+          if ((p as Production & { index?: number }).index === 0) map.set(end, 'acc')
+          else {
+            for (const t of terminals) {
+              map.set(t[0], `r${(p as Production & { index?: number }).index}`)
+            }
+          }
+        }
       }
       table.set(i, map)
     }
@@ -140,16 +144,36 @@ class LR {
   }
 
   parse(code: string, tokenizer: Tokenizer) {
+    const table = this.analysisTable
+    if (!table.size) return
     const stateStack = [0]
     const opStack = [end]
-    const table = this.analysisTable
 
     tokenizer.parse(code)
     const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
     let index = 0
-    for (let i = 0; i < 10; i++) {
+    while (true) {
       const top = stateStack[stateStack.length - 1]
       const token = tokens[index]
+      const t = this.symbolTable.get(token.type) ? token.type : token.value
+      const aog = table.get(top).get(t)
+
+      if (!aog) break
+      else if (aog === 'acc') break
+      else if (aog[0] === 'S') {
+        stateStack.push(parseInt(aog.split('S')[1]))
+        opStack.push(t)
+        index++
+      } else if (aog[0] === 'r') {
+        const n = parseInt(aog.split('r')[1])
+        const p = this.productions[n]
+        for (let i = 0; i < p[1].length; i++) {
+          stateStack.pop()
+          opStack.pop()
+        }
+        stateStack.push(parseInt(table.get(stateStack[stateStack.length - 1]).get(p[0])))
+        opStack.push(p[0])
+      }
     }
   }
 }
