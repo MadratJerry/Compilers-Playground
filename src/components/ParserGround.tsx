@@ -79,7 +79,7 @@ class TokenizerGround extends React.Component<
   }
 > {
   state = {
-    grammarIndex: 1,
+    grammarIndex: 2,
     activeStep: 0,
     ll: new LL(new Map(), new Map()),
     lr: new LR(new Map(), new Map()),
@@ -138,7 +138,13 @@ f   : "(" e ")" { $$.val = $[1].val }
 $accept : e;
 e : A a | B b;
 a : C a | D;
-b : C b | D;`]
+b : C b | D;`,
+`
+$accept : e;
+e : e "+" t | t;
+t : t "*" f | f;
+f : "(" e ")" | DIGIT;
+`]
   initialCode = `(1 + 2) * 3`
 
   tokenizer = new Tokenizer({
@@ -173,6 +179,7 @@ b : C b | D;`]
       lr: lr,
       errors: [],
     })
+    this.state.lr.parse(e.getDoc().getValue(), this.tokenizer)
   }
 
   render() {
@@ -232,9 +239,9 @@ b : C b | D;`]
             <CodeMirror
               height="auto"
               config={{ lineNumbers: true }}
-              onChange={(e: Editor) =>
+              onChange={(e: Editor) => {
                 this.setState({ result: this.state.ll.parse(e.getDoc().getValue(), this.tokenizer) })
-              }
+              }}
               initialValue={this.initialCode}
               returnInstance={(editor: Editor) => (this.codeEditor = editor)}
             />

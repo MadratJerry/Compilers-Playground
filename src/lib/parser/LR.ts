@@ -1,6 +1,7 @@
 import Graph from '@/lib/graph'
 import { end } from '@/lib/parser/GrammarParser'
-import { AnalysisTable, Production, RuleMap, SymbolTable } from '@/lib/types'
+import Tokenizer from '@/lib/tokenizer'
+import { AnalysisTable, Production, RuleMap, SymbolTable, Token } from '@/lib/types'
 
 class LR {
   map: RuleMap
@@ -89,16 +90,18 @@ class LR {
   private DFA() {
     this.setStack = [new Set([this.terms[0], ...this.getExpand(this.terms[0])])]
     for (const a of this.setStack) {
-      for (const p of a) {
-        const t = p[1]
-        const i = t.indexOf('.')
-        if (i !== t.length - 1) {
-          const next = this.terms[this.terms.indexOf(p) + 1]
-          const set = new Set([next, ...this.getExpand(next)])
+      for (const s of this.symbolTable) {
+        const nextArray = [...a.values()]
+          .filter(p => this.getPost(p) === s[0])
+          .map(p => this.terms[this.terms.indexOf(p) + 1])
+        if (nextArray.length) {
+          const expandArray: Array<Production> = []
+          for (const p of nextArray) this.getExpand(p).forEach(e => expandArray.push(e))
+          const set = new Set([...nextArray, ...expandArray])
           let equalSet = null
           for (const s of this.setStack) if (this.isSetEqual(s, set)) equalSet = s
           if (equalSet === null) this.setStack.push((equalSet = set))
-          this.setGraph.addEdge(a, equalSet, t[i + 1])
+          this.setGraph.addEdge(a, equalSet, s[0])
         }
       }
     }
@@ -112,16 +115,42 @@ class LR {
     } else return false
   }
 
-  private getExpand(p: Production): Array<Production> {
+  private getPost(p: Production) {
     const t = p[1]
     const i = t.indexOf('.')
-    if (i !== t.length - 1) {
-      return this.getTerms(t[i + 1])
+    return i === t.length - 1 ? null : t[i + 1]
+  }
+
+  private getExpand(p: Production): Array<Production> {
+    const pn = this.getPost(p)
+    if (pn) {
+      const stack = this.getTerms(pn)
+      for (const s of stack) {
+        if (!stack.find(e => e[0] === this.getPost(s))) {
+          const r = this.getExpand(s)
+          r.forEach(e => stack.push(e))
+        }
+      }
+      return [...stack.values()]
     } else return []
   }
 
   private getTerms(name: string): Array<Production> {
     return this.terms.filter(t => t[0] === name && t[1][0] === '.')
+  }
+
+  parse(code: string, tokenizer: Tokenizer) {
+    const stateStack = [0]
+    const opStack = [end]
+    const table = this.analysisTable
+
+    tokenizer.parse(code)
+    const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
+    let index = 0
+    for (let i = 0; i < 10; i++) {
+      const top = stateStack[stateStack.length - 1]
+      const token = tokens[index]
+    }
   }
 }
 
