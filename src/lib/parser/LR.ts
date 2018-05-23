@@ -16,6 +16,24 @@ class LR {
     this.DFA()
   }
 
+  getDFAGraphviz() {
+    const renderSet = (set: Set<Production>) =>
+      `"I${this.setStack.indexOf(set)}: ${[...set.values()].map(s => `${s[0]}->${s[1].join('')}`).join('\\n')}"`
+    const edges = []
+    for (const a of this.setGraph.map) {
+      for (const e of a[1]) {
+        edges.push(e)
+      }
+    }
+
+    return `digraph finite_state_machine {
+      rankdir=LR;
+      size="8,5"
+      node [shape = rectangle];
+      ${edges.map(e => `${renderSet(e.from)} -> ${renderSet(e.to)} [label = "${e.weight}"];`).join('\n')}
+    }`
+  }
+
   private makeTerms() {
     for (const a of this.map) {
       for (const rule of a[1]) {

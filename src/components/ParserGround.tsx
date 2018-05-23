@@ -27,6 +27,7 @@ import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import ErrorIcon from '@material-ui/icons/Error'
 import { Editor } from 'codemirror'
 import * as React from 'react'
+const Viz = require('viz.js')
 
 const styles = (theme: Theme) => ({
   root: {
@@ -143,6 +144,13 @@ b : C b | D;`]
     },
   })
 
+  dfa: any = React.createRef<HTMLElement>()
+
+  constructor(props: any) {
+    super(props)
+    this.dfa = React.createRef<HTMLElement>()
+  }
+
   onEditorChange = (e: Editor) => {
     let gp1, gp2
     try {
@@ -154,6 +162,7 @@ b : C b | D;`]
     }
     const ll = new LL(gp1.ruleMap, gp1.symbolTable)
     const lr = new LR(gp2.ruleMap, gp2.symbolTable)
+    if (this.dfa.current) this.dfa.current.innerHTML = Viz(lr.getDFAGraphviz())
     const activeHash = [!ll.isRecursive]
     this.setState({
       activeStep: activeHash.filter(a => a).length,
@@ -265,6 +274,7 @@ b : C b | D;`]
             <Typography />
           </div>
         </div>
+        <div ref={this.dfa} />
         <Paper style={{ overflow: 'scroll', width: '100%' }}>
           <Table>
             <TableHead>
