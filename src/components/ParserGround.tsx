@@ -1,5 +1,6 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
+import Tokenizer from '@/lib/tokenizer'
 import { Firsts, Follows } from '@/lib/types'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
@@ -66,35 +67,70 @@ class TokenizerGround extends React.Component<
     activeStep: number
     ll: LL
     errors: Array<string>
+    result: string
   }
 > {
   state = {
     activeStep: 0,
     ll: new LL(new Map(), new Map()),
+    result: '',
     errors: [] as Array<string>,
   }
-  editor: Editor
+  grammarEditor: Editor
+  codeEditor: Editor
 
   // prettier-ignore
-  initialCode: string =
+  initialGrammar: string =
 `
+$accept: e { _ = $[0].val };
+
 e   : t e'
+      {
+        if ($[1].op === "+")
+          $$.val = $[0].val + $[1].val
+        else $$.val = $[0].val
+      }
     ;
 
 e'  : "+" t e'
+      {
+        $$.op = "+";
+        if ($[2].op === "+")
+          $$.val = $[1].val + $[2].val
+        else $$.val = $[1].val
+      }
     |
     ;
 
 t   : f t'
+      {
+        if ($[1].op === "*")
+          $$.val = $[0].val * $[1].val
+        else $$.val = $[0].val
+      }
     ;
 
 t'  : "*" f t'
+      {
+        $$.op = "*"
+        if ($[2].op === "*")
+          $$.val = $[1].val * $[2].val
+        else $$.val = $[1].val
+      }
     |
     ;
-f   : "(" e ")"
-    | ID
+
+f   : "(" e ")" { $$.val = $[1].val }
+    | DIGIT { $$.val = parseInt($[0].token.value) }
     ;
 `
+  initialCode = `(1 + 2) * 3`
+
+  tokenizer = new Tokenizer({
+    tokenizer: {
+      root: [[/\d+/, 'DIGIT'], [/[~!@#%\^&*-+=|\\:`<>.?\/\(\)]+/, 'OP']],
+    },
+  })
 
   onEditorChange = (e: Editor) => {
     let gp
@@ -120,19 +156,20 @@ f   : "(" e ")"
       activeStep,
       ll: { firsts, follows, productions, forecastingTable, symbolTable },
       errors,
+      result,
     } = this.state
     const terminals = [...symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
 
     return (
       <>
         <div className={classes.root}>
-          <div>
+          <div style={{ overflow: 'scroll' }}>
             <CodeMirror
               height="auto"
               config={{ lineNumbers: true }}
               onChange={this.onEditorChange}
-              initialValue={this.initialCode}
-              returnInstance={(editor: Editor) => (this.editor = editor)}
+              initialValue={this.initialGrammar}
+              returnInstance={(editor: Editor) => (this.grammarEditor = editor)}
             />
             <List dense>
               {errors.map((e, i) => (
@@ -144,6 +181,16 @@ f   : "(" e ")"
                 </ListItem>
               ))}
             </List>
+            <CodeMirror
+              height="auto"
+              config={{ lineNumbers: true }}
+              onChange={(e: Editor) =>
+                this.setState({ result: this.state.ll.parse(e.getDoc().getValue(), this.tokenizer) })
+              }
+              initialValue={this.initialCode}
+              returnInstance={(editor: Editor) => (this.codeEditor = editor)}
+            />
+            <div>{result}</div>
           </div>
           <div className={classes.stepper}>
             <Stepper activeStep={activeStep} orientation="vertical">

@@ -22,6 +22,7 @@ class LL {
   follows: Follows = new Map()
   recursiveHash: Map<string, boolean>
   isRecursive: boolean = true
+  private ready: boolean = false
 
   constructor(map: RuleMap, table: SymbolTable) {
     this.map = map
@@ -33,8 +34,8 @@ class LL {
       this.firstSet()
       this.followSet()
       this.createForecastTable()
+      this.ready = true
     }
-    this.parse('id+id*id')
   }
 
   private createForecastTable() {
@@ -126,18 +127,25 @@ class LL {
     return !graph.isEmpty()
   }
 
-  parse(code: string) {
-    const f = ($$: ASTNode) => {
-      console.log($$)
-      $$.x = $$.type !== 'NONTERMINAL' ? $$.value : $$.children.map(t => t.x).join('~')
+  parse(code: string, tokenizer: Tokenizer) {
+    if (!this.ready) return
+    const sddFn = (sdd: string) => ($$: ASTNode, $: Array<ASTNode>) => {
+      try {
+        let _
+        eval(sdd)
+        return _
+      } catch (e) {
+        throw $$
+      }
     }
-    const root = { value: accept, type: 'NONTERMINAL', children: [], parent: null, f } as ASTNode
+    const root = {
+      value: accept,
+      type: 'NONTERMINAL',
+      children: [],
+      parent: null,
+    } as ASTNode
     const stack = [root]
-    const tokenizer = new Tokenizer({
-      tokenizer: {
-        root: [[/[a-zA-Z_\$][\w\$]*/, 'ID'], [/[~!@#%\^&*-+=|\\:`<>.?\/]+/, 'OP']],
-      },
-    })
+
     tokenizer.parse(code)
     const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
     let index = 0
@@ -146,7 +154,6 @@ class LL {
       const top = stack.pop()
       const token = tokens[index]
       if (top.type !== 'NONTERMINAL' && (top.value === token.type || top.value === token.value)) {
-        top.f = f
         top.token = token
         index++
       } else if (top.type !== 'NONTERMINAL') console.log('error')
@@ -155,19 +162,20 @@ class LL {
           this.forecastingTable.get(top.value).get(token.type) || this.forecastingTable.get(top.value).get(token.value)
         if (!p) console.log('Unexpected token')
         else {
+          top.fn = sddFn((p[1] as Array<string> & { sdd?: string }).sdd || '')
           top.children = [...p[1]]
             .filter(t => t !== epsilon)
-            .map(t => ({ value: t, type: this.symbolTable.get(t), parent: top, children: [], f }))
+            .map(t => ({ value: t, type: this.symbolTable.get(t), parent: top, children: [] }))
           ;[...top.children].reverse().forEach(t => stack.push(t))
         }
       }
     }
-    const SD = (root: ASTNode) => {
+    const SD = (root: ASTNode): any => {
       if (root.type === 'NONTERMINAL') root.children.forEach(c => SD(c))
-      root.f(root)
+      if (root.fn) return root.fn(root, root.children)
     }
-    SD(root)
-    console.log(root)
+    const result = SD(root)
+    return result
   }
 }
 

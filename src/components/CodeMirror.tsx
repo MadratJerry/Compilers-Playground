@@ -18,14 +18,19 @@ export default class CodeMirror extends React.Component<P> {
   }
 
   componentDidMount() {
-    const { height = '100%', config = {}, onChange = () => {}, initialValue = '' } = this.props
+    const {
+      height = '100%',
+      config = {},
+      onChange = () => {},
+      initialValue = '',
+      returnInstance = () => {},
+    } = this.props
     this.editor.current.style.height = height
     this.editor.current.style.overflow = 'scroll'
     const editor = codemirror(e => this.editor.current.appendChild(e), config)
     editor.on('change', onChange)
     editor.getDoc().setValue(initialValue)
-
-    this.props.returnInstance(editor)
+    returnInstance(editor)
   }
 
   render() {

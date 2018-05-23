@@ -11,9 +11,11 @@ class GrammarParser {
     tokenizer: {
       root: [
         [/".*?"/, 'STRING'],
+        [/\$accept/, 'NONTERMINAL'],
         [/[a-z_\$'][\w\$']*/, 'NONTERMINAL'],
         [/[A-Z_\$][\w\$]*/, 'TERMINAL'],
         [/[:|;]/, 'OPERATOR'],
+        [/\{[.\S\W]*?\}/, 'SDD'],
       ],
     },
   })
@@ -29,9 +31,7 @@ class GrammarParser {
     this.symbolTable.set(end, 'TERMINAL')
     this.rules()
     // Add start -> first nonterminal
-    const ri = this.ruleMap.keys()
-    ri.next()
-    this.ruleMap.set(accept, [[ri.next().value, end]])
+    this.ruleMap.get(accept)[0][1] = end
     // Check whether defined
     const errors: Array<string> = []
     this.symbolTable.forEach((v, k) => {
@@ -88,8 +88,8 @@ class GrammarParser {
     return expr
   }
 
-  term(): Array<string> {
-    const term = []
+  term(): Array<string> & { sdd?: string } {
+    const term = [] as Array<string> & { sdd?: string }
     while (
       this.lookahead().type === 'TERMINAL' ||
       this.lookahead().type === 'NONTERMINAL' ||
@@ -98,8 +98,13 @@ class GrammarParser {
       term.push(this.addToST(this.lookahead()))
       this.next()
     }
+    if (this.lookahead().type === 'SDD') {
+      term.sdd = this.lookahead().value
+      this.next()
+    }
     if (this.lookahead().type === 'OPERATOR') {
-      return term.length ? term : [epsilon]
+      if (term.length === 0) term[0] = epsilon
+      return term
     } else return null
   }
 
