@@ -28,6 +28,8 @@ class LL {
     this.map = map
     this.symbolTable = table
     if (map.size === 0 || table.size === 0) return
+    // Add start -> first nonterminal
+    this.map.get(accept)[0][1] = end
     this.isRecursive = this.checkRecursive()
     if (!this.isRecursive) {
       this.makeProductions()

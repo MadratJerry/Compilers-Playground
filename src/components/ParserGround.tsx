@@ -1,14 +1,18 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
+import LR from '@/lib/parser/LR'
 import Tokenizer from '@/lib/tokenizer'
 import { Firsts, Follows } from '@/lib/types'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
+import InputLabel from '@material-ui/core/InputLabel'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
+import MenuItem from '@material-ui/core/MenuItem'
 import Paper from '@material-ui/core/Paper'
+import Select from '@material-ui/core/Select'
 import Step from '@material-ui/core/Step'
 import StepContent from '@material-ui/core/StepContent'
 import StepLabel from '@material-ui/core/StepLabel'
@@ -64,6 +68,7 @@ function getStepContent(step: number) {
 class TokenizerGround extends React.Component<
   WithStyles<'root' | 'stepper'>,
   {
+    grammarIndex: number
     activeStep: number
     ll: LL
     errors: Array<string>
@@ -71,6 +76,7 @@ class TokenizerGround extends React.Component<
   }
 > {
   state = {
+    grammarIndex: 1,
     activeStep: 0,
     ll: new LL(new Map(), new Map()),
     result: '',
@@ -80,7 +86,7 @@ class TokenizerGround extends React.Component<
   codeEditor: Editor
 
   // prettier-ignore
-  initialGrammar: string =
+  grammars: Array<string> = [
 `
 $accept: e { _ = $[0].val };
 
@@ -123,7 +129,12 @@ t'  : "*" f t'
 f   : "(" e ")" { $$.val = $[1].val }
     | DIGIT { $$.val = parseInt($[0].token.value) }
     ;
+`,
 `
+$accept : e;
+e : A a | B b;
+a : C a | D;
+b : C b | D;`]
   initialCode = `(1 + 2) * 3`
 
   tokenizer = new Tokenizer({
@@ -133,14 +144,16 @@ f   : "(" e ")" { $$.val = $[1].val }
   })
 
   onEditorChange = (e: Editor) => {
-    let gp
+    let gp1, gp2
     try {
-      gp = new GrammarParser(e.getDoc().getValue())
+      gp1 = new GrammarParser(e.getDoc().getValue())
+      gp2 = new GrammarParser(e.getDoc().getValue())
     } catch (e) {
       this.setState({ errors: e })
       return
     }
-    const ll = new LL(gp.ruleMap, gp.symbolTable)
+    const ll = new LL(gp1.ruleMap, gp1.symbolTable)
+    const lr = new LR(gp2.ruleMap, gp2.symbolTable)
     const activeHash = [!ll.isRecursive]
     this.setState({
       activeStep: activeHash.filter(a => a).length,
@@ -157,6 +170,7 @@ f   : "(" e ")" { $$.val = $[1].val }
       ll: { firsts, follows, productions, forecastingTable, symbolTable },
       errors,
       result,
+      grammarIndex,
     } = this.state
     const terminals = [...symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
 
@@ -164,11 +178,30 @@ f   : "(" e ")" { $$.val = $[1].val }
       <>
         <div className={classes.root}>
           <div style={{ overflow: 'scroll' }}>
+            <InputLabel htmlFor="age-simple">Example:</InputLabel>
+            <Select
+              value={grammarIndex}
+              onChange={e =>
+                this.setState({ grammarIndex: parseInt(e.target.value) }, () =>
+                  this.grammarEditor.getDoc().setValue(this.grammars[parseInt(e.target.value)]),
+                )
+              }
+              inputProps={{
+                name: 'age',
+                id: 'age-simple',
+              }}
+            >
+              {this.grammars.map((g, i) => (
+                <MenuItem value={i} key={i}>
+                  {i + ''}
+                </MenuItem>
+              ))}
+            </Select>
             <CodeMirror
               height="auto"
               config={{ lineNumbers: true }}
               onChange={this.onEditorChange}
-              initialValue={this.initialGrammar}
+              initialValue={this.grammars[grammarIndex]}
               returnInstance={(editor: Editor) => (this.grammarEditor = editor)}
             />
             <List dense>

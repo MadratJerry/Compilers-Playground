@@ -30,8 +30,6 @@ class GrammarParser {
     this.symbolTable.set(accept, 'NONTERMINAL')
     this.symbolTable.set(end, 'TERMINAL')
     this.rules()
-    // Add start -> first nonterminal
-    this.ruleMap.get(accept)[0][1] = end
     // Check whether defined
     const errors: Array<string> = []
     this.symbolTable.forEach((v, k) => {
