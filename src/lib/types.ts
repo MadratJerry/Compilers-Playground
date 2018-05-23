@@ -36,4 +36,13 @@ export type SymbolTable = Map<string, string>
 
 export type ForecastingTable = Map<string, Map<string, Production>>
 
+export type ASTNode = {
+  value: string
+  type: string
+  children: Array<ASTNode>
+  parent: ASTNode
+  token?: Token
+  [sdd: string]: any
+}
+
 export const epsilon = 'ε'

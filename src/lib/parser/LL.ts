@@ -1,7 +1,17 @@
 import Graph from '@/lib/graph'
 import { accept, end } from '@/lib/parser/GrammarParser'
 import Tokenizer, { Token } from '@/lib/tokenizer'
-import { Firsts, Follows, ForecastingTable, Production, RuleMap, RuleTerm, SymbolTable, epsilon } from '@/lib/types'
+import {
+  ASTNode,
+  Firsts,
+  Follows,
+  ForecastingTable,
+  Production,
+  RuleMap,
+  RuleTerm,
+  SymbolTable,
+  epsilon,
+} from '@/lib/types'
 
 class LL {
   map: RuleMap
@@ -68,8 +78,7 @@ class LL {
         for (let i = 0; i < rule.length; i++) {
           const t = rule[i]
           if (t === term) {
-            // splice has side effect
-            const firsts = this.getFirst([...rule].splice(i + 1, rule.length - i - 1))
+            const firsts = this.getFirst(rule.slice(i + 1, rule.length))
             for (const f of firsts) follow.add(f)
             if (firsts.has(epsilon)) for (const f of this.getFollow(a[0])) follow.add(f)
             follow.delete(epsilon)
@@ -118,7 +127,12 @@ class LL {
   }
 
   parse(code: string) {
-    const stack = [accept]
+    const f = ($$: ASTNode) => {
+      console.log($$)
+      $$.x = $$.type !== 'NONTERMINAL' ? $$.value : $$.children.map(t => t.x).join('~')
+    }
+    const root = { value: accept, type: 'NONTERMINAL', children: [], parent: null, f } as ASTNode
+    const stack = [root]
     const tokenizer = new Tokenizer({
       tokenizer: {
         root: [[/[a-zA-Z_\$][\w\$]*/, 'ID'], [/[~!@#%\^&*-+=|\\:`<>.?\/]+/, 'OP']],
@@ -127,22 +141,33 @@ class LL {
     tokenizer.parse(code)
     const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
     let index = 0
+
     while (stack.length) {
       const top = stack.pop()
       const token = tokens[index]
-      if (this.symbolTable.get(top) !== 'NONTERMINAL' && (top === token.type || top === token.value)) index++
-      else if (this.symbolTable.get(top) !== 'NONTERMINAL') console.log('error')
+      if (top.type !== 'NONTERMINAL' && (top.value === token.type || top.value === token.value)) {
+        top.f = f
+        top.token = token
+        index++
+      } else if (top.type !== 'NONTERMINAL') console.log('error')
       else {
-        const p = this.forecastingTable.get(top).get(token.type) || this.forecastingTable.get(top).get(token.value)
+        const p =
+          this.forecastingTable.get(top.value).get(token.type) || this.forecastingTable.get(top.value).get(token.value)
         if (!p) console.log('Unexpected token')
-        else
-          [...p[1]]
-            .reverse()
+        else {
+          top.children = [...p[1]]
             .filter(t => t !== epsilon)
-            .forEach(t => stack.push(t))
+            .map(t => ({ value: t, type: this.symbolTable.get(t), parent: top, children: [], f }))
+          ;[...top.children].reverse().forEach(t => stack.push(t))
+        }
       }
-      console.log([...stack])
     }
+    const SD = (root: ASTNode) => {
+      if (root.type === 'NONTERMINAL') root.children.forEach(c => SD(c))
+      root.f(root)
+    }
+    SD(root)
+    console.log(root)
   }
 }
 
