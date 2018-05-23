@@ -1,5 +1,6 @@
 import CodeMirror from '@/components/CodeMirror'
 import { GrammarParser, LL } from '@/lib/parser'
+import { accept } from '@/lib/parser/GrammarParser'
 import LR from '@/lib/parser/LR'
 import Tokenizer from '@/lib/tokenizer'
 import { Firsts, Follows } from '@/lib/types'
@@ -72,6 +73,7 @@ class TokenizerGround extends React.Component<
     grammarIndex: number
     activeStep: number
     ll: LL
+    lr: LR
     errors: Array<string>
     result: string
   }
@@ -80,6 +82,7 @@ class TokenizerGround extends React.Component<
     grammarIndex: 1,
     activeStep: 0,
     ll: new LL(new Map(), new Map()),
+    lr: new LR(new Map(), new Map()),
     result: '',
     errors: [] as Array<string>,
   }
@@ -167,6 +170,7 @@ b : C b | D;`]
     this.setState({
       activeStep: activeHash.filter(a => a).length,
       ll: ll,
+      lr: lr,
       errors: [],
     })
   }
@@ -177,11 +181,13 @@ b : C b | D;`]
     const {
       activeStep,
       ll: { firsts, follows, productions, forecastingTable, symbolTable },
+      lr: { analysisTable },
       errors,
       result,
       grammarIndex,
     } = this.state
     const terminals = [...symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
+    const nonterminals = [...symbolTable].filter(e => e[1] === 'NONTERMINAL').filter(t => t[0] !== accept)
 
     return (
       <>
@@ -274,8 +280,8 @@ b : C b | D;`]
             <Typography />
           </div>
         </div>
-        <div ref={this.dfa} />
         <Paper style={{ overflow: 'scroll', width: '100%' }}>
+          <h1>LL(1)</h1>
           <Table>
             <TableHead>
               <TableRow>
@@ -298,6 +304,38 @@ b : C b | D;`]
                         </TableCell>
                       ) : (
                         <TableCell key={t[0] + n[0]} />
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </Paper>
+        <Paper style={{ overflow: 'scroll', width: '100%' }}>
+          <h1>LR(0)</h1>
+          <div ref={this.dfa} />
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                {terminals.map(e => <TableCell key={e[0]}>{e[0].padEnd(10, '　')}</TableCell>)}
+                {nonterminals.map(e => <TableCell key={e[0]}>{e[0].padEnd(10, '　')}</TableCell>)}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...analysisTable.entries()].map(n => {
+                return (
+                  <TableRow key={n[0]}>
+                    <TableCell component="th" scope="row">
+                      {n[0]}
+                    </TableCell>
+                    {[...terminals, ...nonterminals].map(t => {
+                      const p = n[1].get(t[0])
+                      return (
+                        <TableCell key={t[0] + n[0]} style={{ width: '100%' }}>
+                          {p ? p : ''}
+                        </TableCell>
                       )
                     })}
                   </TableRow>

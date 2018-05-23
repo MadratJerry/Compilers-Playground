@@ -36,6 +36,8 @@ export type SymbolTable = Map<string, string>
 
 export type ForecastingTable = Map<string, Map<string, Production>>
 
+export type AnalysisTable = Map<number, Map<string, string>>
+
 export type ASTNode = {
   value: string
   type: string

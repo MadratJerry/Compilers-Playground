@@ -1,12 +1,15 @@
 import Graph from '@/lib/graph'
-import { Production, RuleMap, SymbolTable } from '@/lib/types'
+import { end } from '@/lib/parser/GrammarParser'
+import { AnalysisTable, Production, RuleMap, SymbolTable } from '@/lib/types'
 
 class LR {
   map: RuleMap
   symbolTable: SymbolTable
+  productions: Array<Production> = []
   terms: Array<Production> = []
   setGraph = new Graph<Set<Production>, string>()
   setStack: Array<Set<Production>> = []
+  analysisTable: AnalysisTable = new Map()
 
   constructor(map: RuleMap, table: SymbolTable) {
     this.map = map
@@ -14,6 +17,41 @@ class LR {
     if (map.size === 0 || table.size === 0) return
     this.makeTerms()
     this.DFA()
+    this.createAT()
+  }
+
+  private makeProductions() {
+    for (const a of this.map) {
+      for (const rule of a[1]) {
+        this.productions.push([a[0], rule])
+      }
+    }
+  }
+
+  private createAT() {
+    const table = this.analysisTable
+    const terminals = [...this.symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
+    for (let i = 0; i < this.setStack.length; i++) {
+      const map = new Map()
+      const s = this.setStack[i]
+      const edges = this.setGraph.map.get(s)
+      if (edges.size) {
+        for (const e of edges) {
+          map.set(
+            e.weight,
+            `${this.symbolTable.get(e.weight) !== 'NONTERMINAL' ? 'S' : ''}${this.setStack.indexOf(e.to)}`,
+          )
+        }
+      } else {
+        const p = [...s.values()][0]
+        if ((p as Production & { index?: number }).index === 0) map.set(end, 'acc')
+        else
+          for (const t of terminals) {
+            map.set(t[0], `r${(p as Production & { index?: number }).index}`)
+          }
+      }
+      table.set(i, map)
+    }
   }
 
   getDFAGraphviz() {
@@ -35,11 +73,15 @@ class LR {
   }
 
   private makeTerms() {
+    let index = 0
     for (const a of this.map) {
       for (const rule of a[1]) {
         for (let i = 0; i <= rule.length; i++) {
-          this.terms.push([a[0], [...rule.slice(0, i), '.', ...rule.slice(i)]])
+          const term: Production & { index?: number } = [a[0], [...rule.slice(0, i), '.', ...rule.slice(i)]]
+          term.index = index
+          this.terms.push(term)
         }
+        index++
       }
     }
   }
