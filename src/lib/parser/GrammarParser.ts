@@ -1,7 +1,7 @@
 import Tokenizer from '@/lib/tokenizer'
 import { RuleMap, SymbolTable, Token, epsilon } from '@/lib/types'
 
-const start: string = '$accept'
+const accept: string = '$accept'
 const end: string = '$end'
 
 class GrammarParser {
@@ -19,19 +19,19 @@ class GrammarParser {
   })
   ruleMap: RuleMap = new Map()
   symbolTable: SymbolTable = new Map()
-  leftSet: Set<string> = new Set([start])
+  leftSet: Set<string> = new Set([accept])
 
   constructor(text: string) {
     this.text = text
     this.tokenizer.parse(text)
-    this.ruleMap.set(start, [['']])
-    this.symbolTable.set(start, 'NONTERMINAL')
+    this.ruleMap.set(accept, [['']])
+    this.symbolTable.set(accept, 'NONTERMINAL')
     this.symbolTable.set(end, 'TERMINAL')
     this.rules()
     // Add start -> first nonterminal
     const ri = this.ruleMap.keys()
     ri.next()
-    this.ruleMap.set(start, [[ri.next().value, end]])
+    this.ruleMap.set(accept, [[ri.next().value, end]])
     // Check whether defined
     const errors: Array<string> = []
     this.symbolTable.forEach((v, k) => {
@@ -114,4 +114,4 @@ class GrammarParser {
 
 export default GrammarParser
 
-export { start, end }
+export { accept, end }

@@ -1,4 +1,6 @@
 import Graph from '@/lib/graph'
+import { accept, end } from '@/lib/parser/GrammarParser'
+import Tokenizer, { Token } from '@/lib/tokenizer'
 import { Firsts, Follows, ForecastingTable, Production, RuleMap, RuleTerm, SymbolTable, epsilon } from '@/lib/types'
 
 class LL {
@@ -14,6 +16,7 @@ class LL {
   constructor(map: RuleMap, table: SymbolTable) {
     this.map = map
     this.symbolTable = table
+    if (map.size === 0 || table.size === 0) return
     this.isRecursive = this.checkRecursive()
     if (!this.isRecursive) {
       this.makeProductions()
@@ -21,6 +24,7 @@ class LL {
       this.followSet()
       this.createForecastTable()
     }
+    this.parse('id+id*id')
   }
 
   private createForecastTable() {
@@ -111,6 +115,34 @@ class LL {
       for (const d of graph.degreeMap) if (d[1].in === 0 && d[1].out) stack.push(d[0])
     }
     return !graph.isEmpty()
+  }
+
+  parse(code: string) {
+    const stack = [accept]
+    const tokenizer = new Tokenizer({
+      tokenizer: {
+        root: [[/[a-zA-Z_\$][\w\$]*/, 'ID'], [/[~!@#%\^&*-+=|\\:`<>.?\/]+/, 'OP']],
+      },
+    })
+    tokenizer.parse(code)
+    const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
+    let index = 0
+    while (stack.length) {
+      const top = stack.pop()
+      const token = tokens[index]
+      if (this.symbolTable.get(top) !== 'NONTERMINAL' && (top === token.type || top === token.value)) index++
+      else if (this.symbolTable.get(top) !== 'NONTERMINAL') console.log('error')
+      else {
+        const p = this.forecastingTable.get(top).get(token.type) || this.forecastingTable.get(top).get(token.value)
+        if (!p) console.log('Unexpected token')
+        else
+          [...p[1]]
+            .reverse()
+            .filter(t => t !== epsilon)
+            .forEach(t => stack.push(t))
+      }
+      console.log([...stack])
+    }
   }
 }
 
