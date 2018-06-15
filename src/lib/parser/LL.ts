@@ -43,7 +43,7 @@ class LL {
   private createForecastTable() {
     const terminals = [...this.symbolTable].filter(e => e[1] === 'TERMINAL' || e[1] === 'STRING')
     for (const t of [...this.symbolTable].filter(e => e[1] === 'NONTERMINAL'))
-      this.forecastingTable.set(t[0], new Map(terminals.map(t => [t[0], []] as any)))
+      this.forecastingTable.set(t[0], new Map(terminals.map(t => [t[0], null] as any)))
     for (const p of this.productions) {
       const first = this.getFirst(p[1])
       const follow = this.getFollow(p[0])
@@ -149,19 +149,24 @@ class LL {
     const stack = [root]
 
     tokenizer.parse(code)
-    const tokens = [...tokenizer.tokens, { value: end }] as Array<Token>
+    const tokens = [...tokenizer.tokens, { value: end, type: end }] as Array<Token>
     let index = 0
 
     while (stack.length) {
       const top = stack.pop()
       const token = tokens[index]
-      if (top.type !== 'NONTERMINAL' && (top.value === token.type || top.value === token.value)) {
+      // console.log([...stack])
+      // console.log(token)
+      if (
+        (top.type === 'TERMINAL' && top.value === token.type) ||
+        (top.type === 'STRING' && top.value === token.value)
+      ) {
         top.token = token
         index++
       } else if (top.type !== 'NONTERMINAL') console.log('error')
       else {
         const p =
-          this.forecastingTable.get(top.value).get(token.type) || this.forecastingTable.get(top.value).get(token.value)
+          this.forecastingTable.get(top.value).get(token.value) || this.forecastingTable.get(top.value).get(token.type)
         if (!p) console.log('Unexpected token')
         else {
           top.fn = sddFn((p[1] as Array<string> & { sdd?: string }).sdd || '')

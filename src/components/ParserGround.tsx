@@ -79,7 +79,7 @@ class TokenizerGround extends React.Component<
   }
 > {
   state = {
-    grammarIndex: 2,
+    grammarIndex: 3,
     activeStep: 0,
     ll: new LL(new Map(), new Map()),
     lr: new LR(new Map(), new Map()),
@@ -144,12 +144,38 @@ $accept : e;
 e : e "+" t | t;
 t : t "*" f | f;
 f : "(" e ")" | DIGIT;
+`,
+`
+$accept : statement { console.log($[0].t) };
+statement : "if" condition statement "else" statement {
+            $[1].t[3]=$[2].t[0];
+            $$.t = [$[1].t, ['j', null, null, -1],...$[2].t, ...$[4].t]
+          }
+          | "for" "(" IDENTIFIER "=" IDENTIFIER ";" expression ";" expression ")" statement
+            {
+              const f1 = ['=', $[2].token.value, $[4].token.value, -1]
+              const f2 = $[6].t
+              const f3 = $[8].t
+              f2[3] = $[10].t[0]
+              $$.t = [f1, f2, ['j', null, null, -1], f3, ...$[10].t, ['j', null, null, f2]];
+              console.log($$)
+            }
+          | IDENTIFIER "=" IDENTIFIER ";" { $$.t = [['=', $[0].token.value, $[2].token.value, null]] }
+          | ";" ;
+condition : "(" expression ")" { $$.t = $[1].t };
+expression : IDENTIFIER OP IDENTIFIER { $$.t = ['j<', $[0].token.value, $[2].token.value, null]; } ;
 `]
-  initialCode = `(1 + 2) * 3`
+  initialCode = `if ( a < b ) a = b; else for ( c = d; c < d; c = d) d = e;`
 
   tokenizer = new Tokenizer({
     tokenizer: {
-      root: [[/\d+/, 'DIGIT'], [/[~!@#%\^&*-+=|\\:`<>.?\/\(\)]+/, 'OP']],
+      root: [
+        [/\d+/, 'DIGIT'],
+        [/[~!@#%\^&*-+=|\\:`<>.?\/]+/, 'OP'],
+        [/[a-zA-Z_\$][\w\$]*/, 'IDENTIFIER'],
+        [/[{}()\[\]]/, 'BRACKET'],
+        [/[;,.]/, 'DELIMITER'],
+      ],
     },
   })
 
@@ -305,7 +331,7 @@ f : "(" e ")" | DIGIT;
                     </TableCell>
                     {terminals.map(t => {
                       const p = n[1].get(t[0])
-                      return p.length ? (
+                      return p && p.length ? (
                         <TableCell key={t[0] + n[0]} style={{ width: '100%' }}>
                           {p[0]} -> {p[1].join()}
                         </TableCell>
