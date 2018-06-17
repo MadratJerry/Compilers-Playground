@@ -1,12 +1,27 @@
 import FA from '@/lib/fa'
 import Regex from '@/lib/regex'
+import CircularProgress from '@material-ui/core/CircularProgress'
+import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
+import TextField from '@material-ui/core/TextField'
 import * as React from 'react'
-const Viz = require('viz.js')
+import Viz from 'viz.js'
+import workerURL from 'viz.js/full.render.js'
 
-export default class FAGraph extends React.Component {
+const styles = (theme: Theme) => ({
+  progress: {
+    margin: theme.spacing.unit * 2,
+  },
+})
+
+const viz = new Viz({ workerURL })
+class FAGraph extends React.Component<WithStyles<'progress'>> {
   nfa: any
   dfa: any
   mfa: any
+
+  state = {
+    loading: false,
+  }
 
   constructor(props: any) {
     super(props)
@@ -15,21 +30,48 @@ export default class FAGraph extends React.Component {
     this.mfa = React.createRef<HTMLElement>()
   }
 
-  handleChange = (e: any) => {
+  handleChange = async (e: any) => {
+    const timeOut = setTimeout(() => {
+      this.setState({ loading: true })
+    }, 16)
     const r = new Regex(e.target.value)
-    this.nfa.current.innerHTML = Viz(FA.graphviz(r.NFA))
-    this.dfa.current.innerHTML = Viz(FA.graphviz(r.DFA))
-    this.mfa.current.innerHTML = Viz(FA.graphviz(r.MFA))
+    const [NFA, DFA, MFA] = await Promise.all([
+      viz.renderString(FA.graphviz(r.NFA)),
+      viz.renderString(FA.graphviz(r.NFA)),
+      viz.renderString(FA.graphviz(r.MFA)),
+    ])
+    this.nfa.current.innerHTML = NFA
+    this.dfa.current.innerHTML = DFA
+    this.mfa.current.innerHTML = MFA
+    clearTimeout(timeOut)
+    this.setState({ loading: false })
   }
 
   render() {
+    const { classes } = this.props
+    const { loading } = this.state
     return (
       <>
-        <input onChange={this.handleChange} />
-        <div ref={this.nfa} />
-        <div ref={this.dfa} />
-        <div ref={this.mfa} />
+        <TextField
+          id="full-width"
+          label="Label"
+          onChange={this.handleChange}
+          InputLabelProps={{
+            shrink: true,
+          }}
+          placeholder="Placeholder"
+          fullWidth
+          margin="normal"
+        />
+        {loading ? <CircularProgress className={classes.progress} /> : null}
+        <div style={{ display: loading ? 'none' : 'block' }}>
+          <div ref={this.nfa} />
+          <div ref={this.dfa} />
+          <div ref={this.mfa} />
+        </div>
       </>
     )
   }
 }
+
+export default withStyles(styles)(FAGraph)

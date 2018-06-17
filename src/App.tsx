@@ -3,10 +3,10 @@ import ParserGround from '@/components/ParserGround'
 import TokenizerGround from '@/components/TokenizerGround'
 import AppBar from '@material-ui/core/AppBar'
 import Card from '@material-ui/core/Card'
+import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import Tab from '@material-ui/core/Tab'
 import Tabs from '@material-ui/core/Tabs'
 import Typography from '@material-ui/core/Typography'
-import { Theme, WithStyles, withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
 import { hot } from 'react-hot-loader'
 import SwipeableViews from 'react-swipeable-views'
@@ -29,7 +29,7 @@ const styles = (theme: Theme) => ({
 
 class App extends React.Component<WithStyles<'root'>> {
   state = {
-    value: 2,
+    value: 0,
   }
 
   handleChange = (event: any, value: any) => {

@@ -29,6 +29,10 @@ const config = {
         ],
       },
       { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
+      {
+        test: /\.render\.js$/,
+        use: ['file-loader'],
+      },
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
     ],
   },
