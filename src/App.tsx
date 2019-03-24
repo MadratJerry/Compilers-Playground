@@ -1,6 +1,7 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { hot } from 'react-hot-loader'
+import React, { Component } from 'react'
+import logo from './logo.svg'
+import './App.css'
 
 class App extends Component {
   render() {
@@ -11,18 +12,13 @@ class App extends Component {
           <p>
             Edit <code>src/App.tsx</code> and save to reload.
           </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
             Learn React
           </a>
         </header>
       </div>
-    );
+    )
   }
 }
 
-export default App;
+export default (process.env.NODE_ENV === 'development' ? hot(module)(App) : App)
