@@ -12,6 +12,21 @@ class Monarch {
     this.stack.push({ name: Object.keys(tokenizer)[0] })
   }
 
+  private groupCount(re: RegExp): number {
+    const nonEscape = re.source.replace(
+      new RegExp('.*+?^=!:${}()|[]/\\'.replace(/./g, '\\\\\\$&|') + '\\[.*\\]', 'g'),
+      '',
+    )
+
+    // TODO: There may be a better solution
+    const groupMatchRE = /\(\?\:|\)|\(/g
+    let groupRegexp = ''
+    for (let m = groupMatchRE.exec(nonEscape); m !== null; m = groupMatchRE.exec(nonEscape)) groupRegexp += m[0]
+    const groupResult = new RegExp(`${groupRegexp}`).exec('')
+
+    return groupResult ? groupResult.length - 1 : 0
+  }
+
   tokenize(text: string) {
     const state = this.stack[this.stack.length - 1].name
     const { tokenizer } = this._ml
