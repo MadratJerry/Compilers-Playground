@@ -1,24 +1,33 @@
 import { hot } from 'react-hot-loader'
-import React, { Component } from 'react'
-import logo from './logo.svg'
-import './App.css'
+import React, { ChangeEvent, useState } from 'react'
+import Monarch from './lib/tokenizer'
+import Token from './lib/tokenizer/token'
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
-            Learn React
-          </a>
-        </header>
-      </div>
-    )
+const App = () => {
+  const [toekns, setTokens] = useState<Token[]>([])
+
+  const defaultText = 'int a = 1; /*this \n/*is*/ a comment\n*/'
+  const tokenizer = new Monarch({
+    tokenizer: {
+      root: [[/\/\/.*\n/, 'comment'], [/\/\*[.\S\W]*\*\//, 'comment']],
+    },
+  })
+
+  const handleChange = ({ target }: ChangeEvent<HTMLTextAreaElement>) => {
+    const tokenList = tokenizer.tokenize(target.value)
+    setTokens(tokenList)
   }
+
+  return (
+    <div>
+      <textarea onChange={handleChange} defaultValue={defaultText} />
+      <ul>
+        {toekns.map((token, index) => (
+          <li key={index}>{token.toString()}</li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 export default (process.env.NODE_ENV === 'development' ? hot(module)(App) : App)
