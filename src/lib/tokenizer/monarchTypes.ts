@@ -1,13 +1,15 @@
 export interface IMonarchLanguage {
   tokenizer: IMonarchLanguageTokenizer
-  [expession: string]: IMonarchLanguageTokenizer | RegExp | string[]
+}
+export interface IMonarchLanguageJSON extends IMonarchLanguage {
+  [expression: string]: IMonarchLanguageTokenizer | RegExp | string[] | string
 }
 
 export interface IMonarchLanguageTokenizer {
-  [stateName: string]: IMonarchLanguageRule
+  [stateName: string]: IMonarchLanguageRule[]
 }
 
-export type IMonarchLanguageRule = Array<[RegExp, string]>
+export type IMonarchLanguageRule = [RegExp, string] | { regex: RegExp; action: string }
 
 export interface IMonarchState {
   name: string

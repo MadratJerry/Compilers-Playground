@@ -8,9 +8,10 @@ const App = () => {
 
   const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
   const tokenizer = new Monarch({
+    keywords: ['int', 'long'],
     tokenizer: {
       root: [
-        [/int/, 'keyword'],
+        [/@keywords/, 'keyword'],
         [/[ \t\r\n]+/, 'whitespace'],
         [/\/\/.*\n/, 'comment'],
         [/\/\*[.\S\W]*\*\//, 'comment'],
