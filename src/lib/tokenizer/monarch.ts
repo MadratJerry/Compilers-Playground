@@ -27,19 +27,25 @@ class Monarch {
     return groupResult ? groupResult.length - 1 : 0
   }
 
-  tokenize(text: string) {
+  tokenize(text: string): Token[] {
     const state = this.stack[this.stack.length - 1].name
     const { tokenizer } = this._ml
-    const re = new RegExp(tokenizer[state].map(rule => `(${rule[0].source})`).join('|'), 'g')
-    const tokenList = []
+    const tokenList: Token[] = []
 
-    for (let m = re.exec(text); m !== null; m = re.exec(text)) {
-      for (let i = 1; i < m.length; i++) {
-        if (m[i]) {
-          const type = tokenizer[state][i - 1][1]
-          tokenList.push(new Token(m.index, m[i], type))
+    for (let index = 0, lastIndex = 0; ; index = lastIndex) {
+      for (const rule of tokenizer[state]) {
+        const type = rule[1]
+        const re = new RegExp(rule[0].source, 'g')
+        re.lastIndex = index
+        const match = re.exec(text)
+
+        if (match && match.index == index) {
+          tokenList.push(new Token(match.index, match[0], type))
+          lastIndex = re.lastIndex
+          break
         }
       }
+      if (lastIndex === index) break
     }
 
     return tokenList

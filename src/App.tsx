@@ -6,10 +6,15 @@ import Token from './lib/tokenizer/token'
 const App = () => {
   const [toekns, setTokens] = useState<Token[]>([])
 
-  const defaultText = 'int a = 1; /*this \n/*is*/ a comment\n*/'
+  const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
   const tokenizer = new Monarch({
     tokenizer: {
-      root: [[/\/\/.*\n/, 'comment'], [/\/\*[.\S\W]*\*\//, 'comment']],
+      root: [
+        [/int/, 'keyword'],
+        [/[ \t\r\n]+/, 'whitespace'],
+        [/\/\/.*\n/, 'comment'],
+        [/\/\*[.\S\W]*\*\//, 'comment'],
+      ],
     },
   })
 
