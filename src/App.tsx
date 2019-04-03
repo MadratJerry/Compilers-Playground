@@ -7,11 +7,31 @@ const App = () => {
   const [toekns, setTokens] = useState<Token[]>([])
 
   const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
+  // prettier-ignore
   const tokenizer = new Monarch({
-    keywords: ['int', 'long'],
+    keywords: ['abstract',
+      'bool', 'break', 'case', 'catch', 'char', 'class',
+      'const', 'continue', 'default', 'do', 'double', 'else',
+      'enum', 'false', 'final', 'float', 'for', 'goto',
+      'if', 'in', 'int', 'long', 'namespace', 'new', 'operator',
+      'return', 'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
+      'template', 'this', 'true', 'typedef', 'unsigned', 'void', 'while'
+    ],
+    operators: [
+      '=', '>', '<', '!', '~', '?', ':',
+      '==', '<=', '>=', '!=', '&&', '||', '++', '--',
+      '+', '-', '*', '/', '&', '|', '^', '%', '<<',
+      '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=',
+      '^=', '%=', '<<=', '>>=', '>>>='
+    ],
     tokenizer: {
       root: [
-        [/@keywords/, 'keyword'],
+        [/[a-zA-Z_]\w*/, {
+          cases: {
+            '@keywords': { token: 'keyword.$0' },
+            '@default': 'identifier'
+          }
+        }],
         [/[ \t\r\n]+/, 'whitespace'],
         [/\/\/.*\n/, 'comment'],
         [/\/\*[.\S\W]*\*\//, 'comment'],

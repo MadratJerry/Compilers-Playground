@@ -1,4 +1,10 @@
-import { IMonarchLanguageJSON, IMonarchLanguage, IMonarchLanguageRule, IMonarchLanguageTokenizer } from './monarchTypes'
+import {
+  IMonarchLanguageJSON,
+  IMonarchLanguage,
+  IMonarchLanguageAction,
+  IExpandedMonarchLanguageAction,
+  IExpandedMonarchLanguageRule,
+} from './monarchTypes'
 
 export default function compile(json: IMonarchLanguageJSON): IMonarchLanguage {
   const ml: IMonarchLanguage = { tokenizer: {} }
@@ -12,8 +18,8 @@ export default function compile(json: IMonarchLanguageJSON): IMonarchLanguage {
   return json
 }
 
-function compileState(state: string, json: IMonarchLanguageJSON): IMonarchLanguageRule[] {
-  const rules: IMonarchLanguageRule[] = []
+function compileState(state: string, json: IMonarchLanguageJSON): IExpandedMonarchLanguageRule[] {
+  const rules: IExpandedMonarchLanguageRule[] = []
   const ruleList = json.tokenizer[state]
 
   if (!Array.isArray(ruleList)) throw new Error(`Each state must be an array of rules at {tokenizer.${state}}`)
@@ -21,7 +27,7 @@ function compileState(state: string, json: IMonarchLanguageJSON): IMonarchLangua
   for (const rule of ruleList) {
     if (Array.isArray(rule)) {
       const [regex, action] = rule
-      rules.push({ regex: compileRegExp(regex, json), action })
+      rules.push({ regex: compileRegExp(regex, json), action: compileAction(action) })
     }
   }
 
@@ -46,4 +52,26 @@ function compileRegExp(regex: RegExp, json: IMonarchLanguageJSON): RegExp {
       return r ? `(?:${r})` : ''
     }),
   )
+}
+
+function compileAction(action: IMonarchLanguageAction): IExpandedMonarchLanguageAction {
+  if (!action) {
+    return { token: '' }
+  } else if (typeof action === 'string') {
+    return { token: action }
+  } else if (Array.isArray(action)) {
+    const compiledActions = []
+    for (const actionN of action) compiledActions.push(compileAction(actionN))
+    return { group: compiledActions }
+  } else if (action.token || action.token === '') {
+    if (typeof action.token !== 'string') throw new Error(`A 'token' attribute must be of type string`)
+    return { token: action.token }
+  } else if (action.cases) {
+    const newAction = { cases: {} }
+    for (const key in action.cases) {
+      newAction.cases[key] = compileAction(action.cases[key])
+    }
+    return newAction
+  } else
+    throw new Error(`An action must be a string, an object with 'token' or 'cases' attribute, or an array of actions.`)
 }
