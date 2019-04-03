@@ -3,12 +3,9 @@ import React, { ChangeEvent, useState } from 'react'
 import Monarch from './lib/tokenizer'
 import Token from './lib/tokenizer/token'
 
-const App = () => {
-  const [toekns, setTokens] = useState<Token[]>([])
-
-  const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
-  // prettier-ignore
-  const tokenizer = new Monarch({
+// prettier-ignore
+const tokenizer = new Monarch({
+  expressions: {
     keywords: ['abstract',
       'bool', 'break', 'case', 'catch', 'char', 'class',
       'const', 'continue', 'default', 'do', 'double', 'else',
@@ -24,20 +21,24 @@ const App = () => {
       '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=',
       '^=', '%=', '<<=', '>>=', '>>>='
     ],
-    tokenizer: {
-      root: [
-        [/[a-zA-Z_]\w*/, {
-          cases: {
-            '@keywords': { token: 'keyword.$0' },
-            '@default': 'identifier'
-          }
-        }],
-        [/[ \t\r\n]+/, 'whitespace'],
-        [/\/\/.*\n/, 'comment'],
-        [/\/\*[.\S\W]*\*\//, 'comment'],
-      ],
-    },
-  })
+  },
+  tokenizer: {
+    root: [
+      [/[a-zA-Z_]\w*/, {
+        cases: {
+          '@keywords': { token: 'keyword.$0' },
+          '@default': 'identifier'
+        }
+      }],
+      [/[ \t\r\n]+/, 'whitespace'],
+      [/\/\/.*\n/, 'comment'],
+      [/\/\*[.\S\W]*\*\//, 'comment'],
+    ],
+  },
+})
+const App = () => {
+  const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
+  const [toekns, setTokens] = useState<Token[]>(tokenizer.tokenize(defaultText))
 
   const handleChange = ({ target }: ChangeEvent<HTMLTextAreaElement>) => {
     const tokenList = tokenizer.tokenize(target.value)

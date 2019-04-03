@@ -1,12 +1,12 @@
-import { IMonarchLanguage, IMonarchLanguageJSON, IMonarchState, IMonarchLanguageRule } from './monarchTypes'
+import { IMonarchLanguage, IMonarchState, ICompiledMonarchLanguage } from './monarchTypes'
 import compile from './monarchCompile'
 import Token from './token'
 
 class Monarch {
-  private readonly _ml: IMonarchLanguage
+  private readonly _ml: ICompiledMonarchLanguage
   private readonly stack: IMonarchState[] = []
 
-  constructor(json: IMonarchLanguageJSON) {
+  constructor(json: IMonarchLanguage) {
     this._ml = compile(json)
 
     const { tokenizer } = this._ml
@@ -20,13 +20,19 @@ class Monarch {
 
     for (let index = 0, lastIndex = 0; ; index = lastIndex) {
       for (const rule of tokenizer[state]) {
-        const type = rule[1]
-        const re = new RegExp(rule[0].source, 'g')
+        const { regex, action } = rule
+
+        const re = new RegExp(regex.source, 'g')
         re.lastIndex = index
         const match = re.exec(text)
 
         if (match && match.index == index) {
-          tokenList.push(new Token(match.index, match[0], type))
+          const { token, cases } = action
+          if (token) {
+            const type = match[0].replace(new RegExp(regex.source, 'g'), token)
+            tokenList.push(new Token(match.index, match[0], type))
+          } else if (cases) {
+          }
           lastIndex = re.lastIndex
           break
         }
