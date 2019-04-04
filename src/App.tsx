@@ -30,7 +30,7 @@ const tokenizer = new Monarch({
           '@default': 'identifier'
         }
       }],
-      [/(`)(.*)(`)/, ['string.quote','string.content', 'string.quote']],
+      [/(`)(.*)(`)/, ['string','string', 'string']],
       [/[ \t\r\n]+/, 'whitespace'],
       [/\/\/.*\n/, 'comment'],
       [/\/\*[.\S\W]*\*\//, 'comment'],

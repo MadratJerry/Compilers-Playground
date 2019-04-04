@@ -2,6 +2,26 @@ import { IMonarchLanguage, IMonarchState, ICompiledMonarchLanguage, ICompiledMon
 import compile from './monarchCompile'
 import Token from './token'
 
+class MonarchTokenizeContext {
+  public index: number = 0
+  private _tokens: Token[] = []
+  private _lastToken: Token = new Token(-1, '', '')
+
+  pushToken(token: Token) {
+    let newToken = token
+    if (token.type === this._lastToken.type) {
+      this._tokens.pop()
+      newToken = new Token(this._lastToken.offset, this._lastToken.token + token.token, token.type)
+    }
+    this._tokens.push(newToken)
+    this._lastToken = newToken
+  }
+
+  getTokens(): Token[] {
+    return this._tokens
+  }
+}
+
 class Monarch {
   private readonly _ml: ICompiledMonarchLanguage
   private readonly stack: IMonarchState[] = []
@@ -16,10 +36,7 @@ class Monarch {
   tokenize(text: string): Token[] {
     const state = this.stack[this.stack.length - 1].name
     const { tokenizer } = this._ml
-    const context = {
-      index: 0,
-      tokenList: <Token[]>[],
-    }
+    const context = new MonarchTokenizeContext()
 
     for (let lastIndex = 0; ; context.index = lastIndex) {
       for (const rule of tokenizer[state]) {
@@ -29,14 +46,14 @@ class Monarch {
       if (lastIndex === context.index) break
     }
 
-    return context.tokenList
+    return context.getTokens()
   }
 
   private runRule(
     rule: ICompiledMonarchLanguageRule,
     index: number,
     text: string,
-    context: { index: number; tokenList: Token[] },
+    context: MonarchTokenizeContext,
   ): number {
     const { regex, action } = rule
 
@@ -48,9 +65,7 @@ class Monarch {
       const { token, cases, group } = action
       if (token) {
         const type = match[0].replace(new RegExp(regex.source, 'g'), token)
-        context.tokenList.push(
-          new Token(match.index + (match.index < context.index ? context.index : 0), match[0], type),
-        )
+        context.pushToken(new Token(match.index + (match.index < context.index ? context.index : 0), match[0], type))
       } else if (cases) {
         for (const rule of cases) if (this.runRule(rule, 0, match[0], context) > 0) break
       } else if (group) {
