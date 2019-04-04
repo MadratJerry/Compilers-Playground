@@ -7,8 +7,10 @@ import {
   IMonarchLanguageExpressions,
 } from './monarchTypes'
 
-const buildInExpressions = {
+const builtInExpressions = {
   default: /^.*$/,
+  ['']: /^.*$/,
+  ['@']: /^.*$/,
 }
 
 export default function compile(json: IMonarchLanguage): ICompiledMonarchLanguage {
@@ -19,7 +21,6 @@ export default function compile(json: IMonarchLanguage): ICompiledMonarchLanguag
 
   for (const state in json.tokenizer) ml.tokenizer[state] = compileState(state, json)
 
-  console.log(ml)
   return ml
 }
 
@@ -43,7 +44,7 @@ function compileRegExp(regex: RegExp | string, expressions: IMonarchLanguageExpr
   const source = typeof regex === 'string' ? regex : regex.source
   return new RegExp(
     source.replace(/@(\w+)/g, (s, attr) => {
-      const expression = expressions[attr] || buildInExpressions[attr]
+      const expression = expressions[attr] || builtInExpressions[attr]
       let r = ''
       if (typeof expression === 'string') r = expression
       else if (expression && expression instanceof RegExp) r = expression.source
@@ -77,7 +78,7 @@ function compileAction(
     const newAction = { cases: [] as ICompiledMonarchLanguageRule[] }
     for (const key in action.cases) {
       newAction.cases.push({
-        regex: compileRegExp(key, expressions),
+        regex: compileRegExp(`^(?:${key})$`, expressions),
         action: compileAction(action.cases[key], expressions),
       })
     }

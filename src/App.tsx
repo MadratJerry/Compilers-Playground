@@ -10,7 +10,7 @@ const tokenizer = new Monarch({
       'bool', 'break', 'case', 'catch', 'char', 'class',
       'const', 'continue', 'default', 'do', 'double', 'else',
       'enum', 'false', 'final', 'float', 'for', 'goto',
-      'if', 'in', 'int', 'long', 'namespace', 'new', 'operator',
+      'if', 'int', 'long', 'namespace', 'new', 'operator',
       'return', 'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
       'template', 'this', 'true', 'typedef', 'unsigned', 'void', 'while'
     ],
@@ -26,10 +26,11 @@ const tokenizer = new Monarch({
     root: [
       [/[a-zA-Z_]\w*/, {
         cases: {
-          '@keywords': { token: 'keyword.$0' },
+          '@keywords': { token: 'keyword.$&' },
           '@default': 'identifier'
         }
       }],
+      [/(`)(.*)(`)/, ['string.quote','string.content', 'string.quote']],
       [/[ \t\r\n]+/, 'whitespace'],
       [/\/\/.*\n/, 'comment'],
       [/\/\*[.\S\W]*\*\//, 'comment'],
@@ -37,7 +38,7 @@ const tokenizer = new Monarch({
   },
 })
 const App = () => {
-  const defaultText = '/*int this \n/*is*/ a comment\n*/ int a = 1;'
+  const defaultText = '`number ${n}`/*int this \n/*is*/ a comment\n*/ double pi = 3.1415;'
   const [toekns, setTokens] = useState<Token[]>(tokenizer.tokenize(defaultText))
 
   const handleChange = ({ target }: ChangeEvent<HTMLTextAreaElement>) => {

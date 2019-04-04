@@ -1,4 +1,4 @@
-import { IMonarchLanguage, IMonarchState, ICompiledMonarchLanguage } from './monarchTypes'
+import { IMonarchLanguage, IMonarchState, ICompiledMonarchLanguage, ICompiledMonarchLanguageRule } from './monarchTypes'
 import compile from './monarchCompile'
 import Token from './token'
 
@@ -16,31 +16,60 @@ class Monarch {
   tokenize(text: string): Token[] {
     const state = this.stack[this.stack.length - 1].name
     const { tokenizer } = this._ml
-    const tokenList: Token[] = []
-
-    for (let index = 0, lastIndex = 0; ; index = lastIndex) {
-      for (const rule of tokenizer[state]) {
-        const { regex, action } = rule
-
-        const re = new RegExp(regex.source, 'g')
-        re.lastIndex = index
-        const match = re.exec(text)
-
-        if (match && match.index == index) {
-          const { token, cases } = action
-          if (token) {
-            const type = match[0].replace(new RegExp(regex.source, 'g'), token)
-            tokenList.push(new Token(match.index, match[0], type))
-          } else if (cases) {
-          }
-          lastIndex = re.lastIndex
-          break
-        }
-      }
-      if (lastIndex === index) break
+    const context = {
+      index: 0,
+      tokenList: <Token[]>[],
     }
 
-    return tokenList
+    for (let lastIndex = 0; ; context.index = lastIndex) {
+      for (const rule of tokenizer[state]) {
+        lastIndex = this.runRule(rule, context.index, text, context)
+        if (lastIndex !== context.index) break
+      }
+      if (lastIndex === context.index) break
+    }
+
+    return context.tokenList
+  }
+
+  private runRule(
+    rule: ICompiledMonarchLanguageRule,
+    index: number,
+    text: string,
+    context: { index: number; tokenList: Token[] },
+  ): number {
+    const { regex, action } = rule
+
+    const re = new RegExp(regex.source, 'g')
+    re.lastIndex = index
+    const match = re.exec(text)
+
+    if (match && match.index == index) {
+      const { token, cases, group } = action
+      if (token) {
+        const type = match[0].replace(new RegExp(regex.source, 'g'), token)
+        context.tokenList.push(
+          new Token(match.index + (match.index < context.index ? context.index : 0), match[0], type),
+        )
+      } else if (cases) {
+        for (const rule of cases) if (this.runRule(rule, 0, match[0], context) > 0) break
+      } else if (group) {
+        if (match.reduce((pv, cv) => pv + cv.length, 0) > 2 * match[0].length)
+          throw new Error(
+            `With groups, all characters should be matched in consecutive groups in rule: ${rule.regex.source}`,
+          )
+        for (let i = 1, lengthIndex = 0; i < match.length; lengthIndex += match[i++].length) {
+          context.index += this.runRule(
+            { regex: new RegExp(`^[\\s\\S]*$`), action: group[i - 1] },
+            0,
+            match[i],
+            context,
+          )
+        }
+      }
+      return re.lastIndex
+    }
+    return index
   }
 
   private groupCount(re: RegExp): number {
