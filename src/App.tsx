@@ -3,7 +3,7 @@ import React, { ChangeEvent, useState } from 'react'
 import Monarch from './lib/tokenizer'
 import Token from './lib/tokenizer/token'
 import simpleC from './lib/languages/simpleC'
-import MiniDrawer from './components/MiniDrawer'
+import NavagationButton from './components/NavagationButton'
 
 const tokenizer = new Monarch(simpleC)
 const App = () => {
@@ -17,14 +17,14 @@ const App = () => {
 
   return (
     <div>
-      <MiniDrawer>
-        <textarea onChange={handleChange} defaultValue={defaultText} />
-        <ul>
-          {toekns.map((token, index) => (
-            <li key={index}>{token.toString()}</li>
-          ))}
-        </ul>
-      </MiniDrawer>
+      <NavagationButton />
+      <h1>Content</h1>
+      <textarea onChange={handleChange} defaultValue={defaultText} />
+      <ul>
+        {toekns.map((token, index) => (
+          <li key={index}>{token.toString()}</li>
+        ))}
+      </ul>
     </div>
   )
 }
