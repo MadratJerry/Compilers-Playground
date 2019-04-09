@@ -11,10 +11,21 @@ const App = () => {
   const defaultText = '`number ${n}`/*int this \n/*is*/ a comment\n*/ double pi = 3.1415;'
   const [toekns, setTokens] = useState<Token[]>(tokenizer.tokenize(defaultText))
 
-  const handleChange: EditorProps['onContentChange'] = (_, model) => {
-    const tokenList = tokenizer.tokenize(model.getValue())
-    setTokens(tokenList)
-  }
+  const editorRef = React.useRef<NonNullable<EditorProps['editorRef']>['current']>()
+
+  React.useEffect(() => {
+    if (editorRef.current) {
+      const editor = editorRef.current
+      const model = editor.getModel()
+
+      if (model) {
+        model.onDidChangeContent(() => {
+          const tokenList = tokenizer.tokenize(model.getValue())
+          setTokens(tokenList)
+        })
+      }
+    }
+  }, [])
 
   return (
     <div>
@@ -22,9 +33,13 @@ const App = () => {
       <h1>Content</h1>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <Editor
+          editorRef={editorRef}
           style={{ width: '50%', height: 300 }}
-          onContentChange={handleChange}
-          options={{ value: defaultText, lineNumbers: 'off', minimap: { enabled: false } }}
+          options={{
+            value: defaultText,
+            lineNumbers: 'off',
+            minimap: { enabled: false },
+          }}
         />
         <ul>
           {toekns.map((token, index) => (

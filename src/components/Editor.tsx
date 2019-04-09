@@ -3,20 +3,16 @@ import * as monaco from 'monaco-editor'
 import { CSSProperties } from '@material-ui/styles/withStyles'
 
 export interface Props {
-  onContentChange?: (e: monaco.editor.IModelContentChangedEvent, model: monaco.editor.ITextModel) => void
   options?: monaco.editor.IEditorConstructionOptions
   style?: CSSProperties
+  editorRef?: React.MutableRefObject<monaco.editor.IStandaloneCodeEditor | undefined>
 }
 
-const Editor: React.SFC<Props> = ({ options, onContentChange = () => {}, ...rest }) => {
+const Editor: React.SFC<Props> = ({ options, editorRef, ...rest }) => {
   const editorEl = useRef<HTMLDivElement>(document.createElement('div'))
-
   React.useEffect(() => {
     const editor = monaco.editor.create(editorEl.current, options)
-    const model = editor.getModel()
-    if (model) {
-      model.onDidChangeContent(e => onContentChange(e, model))
-    }
+    if (editorRef) editorRef.current = editor
   }, [])
 
   return <div ref={editorEl} {...rest} />
