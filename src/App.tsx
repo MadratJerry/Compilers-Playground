@@ -1,5 +1,6 @@
 import { hot } from 'react-hot-loader'
 import React, { ChangeEvent, useState } from 'react'
+import Editor from './components/Editor'
 import Monarch from './lib/tokenizer'
 import Token from './lib/tokenizer/token'
 import simpleC from './lib/languages/simpleC'
@@ -19,6 +20,7 @@ const App = () => {
     <div>
       <NavagationButton />
       <h1>Content</h1>
+      <Editor />
       <textarea onChange={handleChange} defaultValue={defaultText} />
       <ul>
         {toekns.map((token, index) => (

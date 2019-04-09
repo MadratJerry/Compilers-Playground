@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import { makeStyles } from '@material-ui/styles'
 import Fab from '@material-ui/core/Fab'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
@@ -9,19 +9,20 @@ import NavagationList from './NavigationList'
 import AnimateMenuIcon from './AnimateMenuIcon'
 
 const useStyles = makeStyles(theme => ({
-  fab: { position: 'fixed', top: 8, left: 8 },
+  fab: { position: 'fixed', top: 8, left: 8, zIndex: 1 },
   popper: { marginTop: theme.spacing.unit },
 }))
 
 const NavagationButton = () => {
   const classes = useStyles()
-  const [open, setOpen] = React.useState(false)
-  const anchorEl = React.useRef(null) as any
+  const [open, setOpen] = useState(false)
+  const anchorEl = useRef<HTMLButtonElement>(null)
 
   const handleToggle = () => setOpen(!open)
 
-  const handleClose = (event: React.ChangeEvent<{}>) => {
-    if (anchorEl.current.contains(event.target)) return
+  const handleClose = (event: React.ChangeEvent<{} | Node>) => {
+    if (event.target instanceof Node && anchorEl.current && anchorEl.current.contains(event.target)) return
+
     setOpen(false)
   }
 
