@@ -1,6 +1,6 @@
 import { hot } from 'react-hot-loader'
 import React, { ChangeEvent, useState } from 'react'
-import Editor from './components/Editor'
+import Editor, { Props as EditorProps } from './components/Editor'
 import Monarch from './lib/tokenizer'
 import Token from './lib/tokenizer/token'
 import simpleC from './lib/languages/simpleC'
@@ -11,8 +11,8 @@ const App = () => {
   const defaultText = '`number ${n}`/*int this \n/*is*/ a comment\n*/ double pi = 3.1415;'
   const [toekns, setTokens] = useState<Token[]>(tokenizer.tokenize(defaultText))
 
-  const handleChange = ({ target }: ChangeEvent<HTMLTextAreaElement>) => {
-    const tokenList = tokenizer.tokenize(target.value)
+  const handleChange: EditorProps['onContentChange'] = (_, model) => {
+    const tokenList = tokenizer.tokenize(model.getValue())
     setTokens(tokenList)
   }
 
@@ -20,13 +20,18 @@ const App = () => {
     <div>
       <NavagationButton />
       <h1>Content</h1>
-      <Editor />
-      <textarea onChange={handleChange} defaultValue={defaultText} />
-      <ul>
-        {toekns.map((token, index) => (
-          <li key={index}>{token.toString()}</li>
-        ))}
-      </ul>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Editor
+          style={{ width: '50%', height: 300 }}
+          onContentChange={handleChange}
+          options={{ value: defaultText, lineNumbers: 'off', minimap: { enabled: false } }}
+        />
+        <ul>
+          {toekns.map((token, index) => (
+            <li key={index}>{token.toString()}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }

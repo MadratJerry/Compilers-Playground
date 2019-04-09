@@ -1,16 +1,25 @@
 import React, { useRef } from 'react'
 import * as monaco from 'monaco-editor'
+import { CSSProperties } from '@material-ui/styles/withStyles'
 
-interface Props {
-  value?: string
+export interface Props {
+  onContentChange?: (e: monaco.editor.IModelContentChangedEvent, model: monaco.editor.ITextModel) => void
+  options?: monaco.editor.IEditorConstructionOptions
+  style?: CSSProperties
 }
 
-const Editor: React.SFC<Props> = ({ value = '' }) => {
+const Editor: React.SFC<Props> = ({ options, onContentChange = () => {}, ...rest }) => {
   const editorEl = useRef<HTMLDivElement>(document.createElement('div'))
+
   React.useEffect(() => {
-    monaco.editor.create(editorEl.current, { value })
+    const editor = monaco.editor.create(editorEl.current, options)
+    const model = editor.getModel()
+    if (model) {
+      model.onDidChangeContent(e => onContentChange(e, model))
+    }
   }, [])
-  return <div ref={editorEl} style={{ height: 500 }} />
+
+  return <div ref={editorEl} {...rest} />
 }
 
 export default Editor

@@ -10,7 +10,7 @@ import AnimateMenuIcon from './AnimateMenuIcon'
 
 const useStyles = makeStyles(theme => ({
   fab: { position: 'fixed', top: 8, left: 8, zIndex: 1 },
-  popper: { marginTop: theme.spacing.unit },
+  popper: { marginTop: theme.spacing.unit, zIndex: 1 },
 }))
 
 const NavagationButton = () => {
@@ -38,13 +38,13 @@ const NavagationButton = () => {
       >
         <AnimateMenuIcon toggle={open} />
       </Fab>
-      <Popper open={open} anchorEl={anchorEl.current} transition disablePortal>
+      <Popper open={open} anchorEl={anchorEl.current} transition disablePortal className={classes.popper}>
         {({ TransitionProps, placement }) => (
           <Grow
             {...TransitionProps}
             style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
           >
-            <Paper className={classes.popper}>
+            <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <NavagationList />
               </ClickAwayListener>
