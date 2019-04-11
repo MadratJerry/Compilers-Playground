@@ -1,10 +1,10 @@
 import { hot } from 'react-hot-loader'
-import React, { ChangeEvent, useState } from 'react'
-import Editor, { Props as EditorProps } from './components/Editor'
-import Monarch from './lib/tokenizer'
-import Token from './lib/tokenizer/token'
-import simpleC from './lib/languages/simpleC'
-import NavagationButton from './components/NavagationButton'
+import React, { useState } from 'react'
+import Editor, { Props as EditorProps } from '@/components/Editor'
+import Monarch from '@/lib/tokenizer'
+import Token from '@/lib/tokenizer/token'
+import simpleC from '@/lib/languages/simpleC'
+import NavagationButton from '@/components/NavagationButton'
 
 const tokenizer = new Monarch(simpleC)
 const App = () => {

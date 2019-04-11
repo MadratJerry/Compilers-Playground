@@ -5,8 +5,8 @@ import ClickAwayListener from '@material-ui/core/ClickAwayListener'
 import Grow from '@material-ui/core/Grow'
 import Paper from '@material-ui/core/Paper'
 import Popper from '@material-ui/core/Popper'
-import NavagationList from './NavigationList'
-import AnimateMenuIcon from './AnimateMenuIcon'
+import NavagationList from '@/components/NavigationList'
+import AnimateMenuIcon from '@/components/AnimateMenuIcon'
 
 const useStyles = makeStyles(theme => ({
   fab: { position: 'fixed', top: 8, left: 8, zIndex: 1 },

@@ -1,4 +1,4 @@
-import { IMonarchLanguage } from '../tokenizer/monarchTypes'
+import { IMonarchLanguage } from '@/lib/tokenizer/monarchTypes'
 
 // prettier-ignore
 const simpleC : IMonarchLanguage = {

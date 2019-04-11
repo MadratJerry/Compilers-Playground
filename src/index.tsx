@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './App'
-import * as serviceWorker from './serviceWorker'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { createMuiTheme } from '@material-ui/core/styles'
 import { ThemeProvider } from '@material-ui/styles'
+import App from './App'
+import * as serviceWorker from './serviceWorker'
 import 'typeface-roboto'
 
 const theme = createMuiTheme({ typography: { useNextVariants: true } })
