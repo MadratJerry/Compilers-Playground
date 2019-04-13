@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import Editor, { Props as EditorProps } from '@/components/Editor'
+import MonacoEditor from 'react-monaco-editor'
 import Monarch from '@/lib/tokenizer'
 import Token from '@/lib/tokenizer/token'
 import simpleC from '@/lib/languages/simpleC'
@@ -11,35 +11,29 @@ const Home = () => {
   const defaultText = '`number ${n}`/*int this \n/*is*/ a comment\n*/ double pi = 3.1415;'
   const [toekns, setTokens] = useState<Token[]>(tokenizer.tokenize(defaultText))
 
-  const editorRef = React.useRef<NonNullable<EditorProps['editorRef']>['current']>()
-
-  React.useEffect(() => {
-    if (editorRef.current) {
-      const editor = editorRef.current
-      const model = editor.getModel()
-
-      if (model) {
-        model.onDidChangeContent(() => {
-          const tokenList = tokenizer.tokenize(model.getValue())
-          setTokens(tokenList)
-        })
-      }
-    }
-  }, [])
+  const editorDidMount = (editor: any) => {
+    const model = editor.getModel()
+    model.onDidChangeContent(() => {
+      const tokenList = tokenizer.tokenize(model.getValue())
+      setTokens(tokenList)
+    })
+  }
 
   return (
     <div>
       <NavagationButton />
       <h1>Content</h1>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Editor
-          editorRef={editorRef}
-          style={{ width: '50%', height: 300 }}
+        <MonacoEditor
+          width="50%"
+          height="300"
+          language="plain"
+          defaultValue={defaultText}
           options={{
-            value: defaultText,
             lineNumbers: 'off',
             minimap: { enabled: false },
           }}
+          editorDidMount={editorDidMount}
         />
         <ul>
           {toekns.map((token, index) => (
