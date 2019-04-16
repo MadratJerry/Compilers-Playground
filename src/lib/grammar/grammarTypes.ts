@@ -1,10 +1,10 @@
-import Token from '@/lib/tokenizer/token'
+import { Token } from '@/lib/tokenizer'
 
 export type Symbol = string
 export type SymbolMap = Map<string, Token['type']>
-export type Alternative = Array<Symbol>
-export type Alternatives = Array<Alternative>
-export type Production = [Symbol, Alternatives]
-export type Productions = Array<Production>
-export type ProductionsMap = Map<Symbol, Alternatives>
-export type Firsts = Map<Symbol, Set<Symbol>>
+export type Alternative<T> = Array<T>
+export type Alternatives<T> = Array<Alternative<T>>
+export type Production<T> = [T, Alternatives<T>]
+export type Productions<T> = Array<Production<T>>
+export type ProductionsMap<T> = Map<T, Alternatives<T>>
+export type Firsts<T> = Map<T, Set<T>>
