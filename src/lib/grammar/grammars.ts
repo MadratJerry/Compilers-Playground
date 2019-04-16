@@ -13,7 +13,7 @@ class Grammars {
     for (const production of productions) {
       const [symbol, alternatives] = production
       for (const alternative of alternatives)
-        this._addProduction(this._addSymbol(symbol), alternative.map(t => this._addSymbol(t)))
+        this.addProduction(this.addSymbol(symbol), alternative.map(t => this.addSymbol(t)))
     }
   }
 
@@ -35,7 +35,7 @@ class Grammars {
     return this._symbolMap.get(symbol)
   }
 
-  private _addSymbol(symbol: Token): string {
+  private addSymbol(symbol: Token): string {
     const symbolType = this._symbolMap.get(symbol.token)
     if (symbolType === undefined) {
       this._symbolMap.set(symbol.token, symbol.type)
@@ -46,7 +46,7 @@ class Grammars {
     return symbol.token
   }
 
-  private _addProduction(symbol: Grammar.Symbol, alternative: Grammar.Alternative<Grammar.Symbol>) {
+  private addProduction(symbol: Grammar.Symbol, alternative: Grammar.Alternative<Grammar.Symbol>) {
     if (alternative.length === 0) alternative = [epsilon]
     const alternatives = this.getAlternatives(symbol)
     alternatives.push(alternative)
