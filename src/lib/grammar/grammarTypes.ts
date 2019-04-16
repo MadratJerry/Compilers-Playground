@@ -8,3 +8,5 @@ export type Production<T> = [T, Alternatives<T>]
 export type Productions<T> = Array<Production<T>>
 export type ProductionsMap<T> = Map<T, Alternatives<T>>
 export type Firsts<T> = Map<T, Set<T>>
+export type Follows<T> = Map<T, Set<T>>
+export type SymbolIndexMap<T> = Map<T, Set<[T, Alternative<T>, number]>>

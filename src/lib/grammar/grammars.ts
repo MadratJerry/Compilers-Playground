@@ -1,6 +1,7 @@
 import { Token } from '@/lib/tokenizer'
 import * as Grammar from './grammarTypes'
 
+export const $end = '$end'
 export const epsilon = 'ϵ'
 export const NonTerminal = 'NonTerminal'
 export const Terminal = 'Terminal'
@@ -8,6 +9,7 @@ export const Terminal = 'Terminal'
 class Grammars {
   private readonly _productions: Grammar.ProductionsMap<Grammar.Symbol> = new Map()
   private readonly _symbolMap: Grammar.SymbolMap = new Map([[epsilon, Terminal]])
+  protected readonly _symbolIndexMap: Grammar.SymbolIndexMap<Grammar.Symbol> = new Map()
 
   constructor(productions: Grammar.Productions<Token>) {
     for (const production of productions) {
@@ -50,6 +52,21 @@ class Grammars {
     if (alternative.length === 0) alternative = [epsilon]
     const alternatives = this.getAlternatives(symbol)
     alternatives.push(alternative)
+    alternative.forEach((s, i) => this.addSymbolIndex(s, symbol, alternative, i))
+  }
+
+  private addSymbolIndex(
+    symbol: Grammar.Symbol,
+    nonTerminal: Grammar.Symbol,
+    alternative: Grammar.Alternative<Grammar.Symbol>,
+    index: number,
+  ) {
+    const indexSet = this._symbolIndexMap.get(symbol)
+    if (indexSet) {
+      indexSet.add([nonTerminal, alternative, index])
+    } else {
+      this._symbolIndexMap.set(symbol, new Set([[nonTerminal, alternative, index]]))
+    }
   }
 }
 
