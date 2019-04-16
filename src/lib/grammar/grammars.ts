@@ -1,15 +1,13 @@
-import { SimpleGraph } from '@/lib/graph'
 import Token from '@/lib/tokenizer/token'
-import { SyntaxType } from './syntaxTypes'
+import * as Grammar from './grammarTypes'
 
 export const epsilon = 'ϵ'
 export const NonTerminal = 'NonTerminal'
 export const Terminal = 'Terminal'
 
-class Syntax {
-  private readonly _graph = new SimpleGraph<SyntaxType.Symbol>()
-  private readonly _productions: SyntaxType.ProductionsMap = new Map()
-  private readonly _symbolMap: SyntaxType.SymbolMap = new Map([[epsilon, Terminal]])
+class Grammars {
+  private readonly _productions: Grammar.ProductionsMap = new Map()
+  private readonly _symbolMap: Grammar.SymbolMap = new Map([[epsilon, Terminal]])
 
   public addSymbol(symbol: Token): string {
     const symbolType = this._symbolMap.get(symbol.token)
@@ -30,7 +28,7 @@ class Syntax {
     this._addProduction(this.addSymbol(symbol), alternative.map(t => this.addSymbol(t)))
   }
 
-  public getAlternatives(symbol: SyntaxType.Symbol): SyntaxType.Alternatives {
+  public getAlternatives(symbol: Grammar.Symbol): Grammar.Alternatives {
     let alternatives = this._productions.get(symbol)
     if (alternatives) return alternatives
     else {
@@ -39,15 +37,15 @@ class Syntax {
       return alternatives
     }
   }
-  public getProductions(): SyntaxType.ProductionsMap {
+  public getProductions(): Grammar.ProductionsMap {
     return this._productions
   }
 
-  private _addProduction(symbol: SyntaxType.Symbol, alternative: SyntaxType.Alternative) {
+  private _addProduction(symbol: Grammar.Symbol, alternative: Grammar.Alternative) {
     if (alternative.length === 0) alternative = [epsilon]
     const alternatives = this.getAlternatives(symbol)
     alternatives.push(alternative)
   }
 }
 
-export default Syntax
+export default Grammars

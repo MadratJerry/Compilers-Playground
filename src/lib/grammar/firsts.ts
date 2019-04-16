@@ -1,11 +1,11 @@
-import Syntax, { NonTerminal, Terminal } from './syntax'
-import { SyntaxType } from './syntaxTypes'
+import Grammars, { NonTerminal, Terminal } from './grammars'
+import * as GrammarType from './grammarTypes'
 
-export default function firsts(grammar: Syntax): SyntaxType.Firsts {
-  const firsts: SyntaxType.Firsts = new Map()
+export default function firsts(grammar: Grammars): GrammarType.Firsts {
+  const firsts: GrammarType.Firsts = new Map()
   grammar.getProductions().forEach((_, k) => firsts.set(k, first(k)))
 
-  function first(symbol: SyntaxType.Symbol): Set<SyntaxType.Symbol> {
+  function first(symbol: GrammarType.Symbol): Set<GrammarType.Symbol> {
     const type = grammar.getSymbolType(symbol)
     if (type === Terminal) return new Set([symbol])
     else if (type === NonTerminal) {
