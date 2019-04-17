@@ -1,5 +1,5 @@
-import { case1, expand, adapter } from './grammar.test'
-import LL1Grammars from './ll1Grammars'
+import { case1, expand, adapter, case2 } from './grammar.test'
+import LL1Grammars, { LeftRecursionError } from './ll1Grammars'
 import { epsilon, $end, $accept } from './grammars'
 
 test('LL1 Grammars test', () => {
@@ -26,4 +26,8 @@ test('LL1 Grammars test', () => {
       [`T'`, $end, ')', '+'],
     ].sort(),
   )
+})
+
+test('Grammars test case 2', () => {
+  expect(() => new LL1Grammars(adapter(case2))).toThrow(LeftRecursionError)
 })

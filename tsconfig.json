@@ -23,7 +23,9 @@
     "importHelpers": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
   "extends": "./tsconfig.paths.json",
   "include": [

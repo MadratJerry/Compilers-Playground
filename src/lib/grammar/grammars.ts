@@ -3,7 +3,7 @@ import * as Grammar from './grammarTypes'
 
 export const $accept = '$accept'
 export const $end = '$end'
-export const epsilon = 'ϵ'
+export const epsilon = 'ε'
 export const NonTerminal = 'NonTerminal'
 export const Terminal = 'Terminal'
 

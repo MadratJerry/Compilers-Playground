@@ -2,6 +2,29 @@ import { Token } from '@/lib/tokenizer'
 import Grammars, { Terminal, NonTerminal, epsilon, $accept } from './grammars'
 import * as Grammar from './grammarTypes'
 
+export class LeftRecursionError extends Error {}
+
+function checkLeftRecursion() {
+  const symbolSet = new Set()
+  return function(
+    _target: unknown,
+    _propertyName: string,
+    descriptor: TypedPropertyDescriptor<
+      (symbol: Grammar.Symbol | Grammar.Alternative<Grammar.Symbol>) => Set<Grammar.Symbol>
+    >,
+  ) {
+    let method = descriptor.value || new Function()
+    descriptor.value = function() {
+      const symbol = arguments[0]
+      if (symbolSet.has(symbol)) throw new LeftRecursionError(`Symbol '${symbol}' is left recursion`)
+      else symbolSet.add(symbol)
+      const result = method.apply(this, arguments)
+      symbolSet.delete(symbol)
+      return result
+    }
+  }
+}
+
 export default class LL1Grammars extends Grammars {
   private readonly _firsts: Grammar.Firsts<Grammar.Symbol> = new Map()
   private readonly _follows: Grammar.Follows<Grammar.Symbol> = new Map()
@@ -20,6 +43,7 @@ export default class LL1Grammars extends Grammars {
     return this._follows
   }
 
+  @checkLeftRecursion()
   private first(symbol: Grammar.Symbol | Grammar.Alternative<Grammar.Symbol>): Set<Grammar.Symbol> {
     if (Array.isArray(symbol)) {
       if (symbol.length) return new Set(this.first(symbol[0]))
@@ -62,9 +86,8 @@ export default class LL1Grammars extends Grammars {
         firstSet.delete(epsilon)
         firstSet.forEach(s => newSet.add(s))
       })
-    } else {
-      if (symbol !== $accept) throw new Error(`NonTerminal '${symbol}' is not in productinos.`)
     }
+
     return newSet
   }
 }

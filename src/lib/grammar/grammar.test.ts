@@ -27,7 +27,9 @@ export const case1: Grammar.Productions<Grammar.Symbol> = [
   [`F`, [[`(`, `E`, `)`], [`id`]]],
 ]
 
-test('Grammars test', () => {
+export const case2: Grammar.Productions<Grammar.Symbol> = [[`A`, [[`E`, `x`], []]], [`E`, [[`A`]]]]
+
+test('Grammars test case 1', () => {
   const grammars = new Grammars(adapter(case1))
   expect([...grammars.getProductions().entries()].toString().replace(new RegExp(`${epsilon}`, 'g'), '')).toBe(
     [[$accept, [[`E`, $end]]]].concat(case1).toString(),
