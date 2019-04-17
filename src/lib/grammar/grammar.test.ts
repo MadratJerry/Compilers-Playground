@@ -1,4 +1,4 @@
-import Grammars, { epsilon } from './grammars'
+import Grammars, { epsilon, $accept, $end } from './grammars'
 import * as Grammar from './grammarTypes'
 import { Token } from '../tokenizer'
 
@@ -30,6 +30,6 @@ export const case1: Grammar.Productions<Grammar.Symbol> = [
 test('Grammars test', () => {
   const grammars = new Grammars(adapter(case1))
   expect([...grammars.getProductions().entries()].toString().replace(new RegExp(`${epsilon}`, 'g'), '')).toBe(
-    case1.toString(),
+    [[$accept, [[`E`, $end]]]].concat(case1).toString(),
   )
 })

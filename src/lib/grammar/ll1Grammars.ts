@@ -1,5 +1,5 @@
 import { Token } from '@/lib/tokenizer'
-import Grammars, { Terminal, NonTerminal, epsilon, $end } from './grammars'
+import Grammars, { Terminal, NonTerminal, epsilon, $accept } from './grammars'
 import * as Grammar from './grammarTypes'
 
 export default class LL1Grammars extends Grammars {
@@ -9,10 +9,6 @@ export default class LL1Grammars extends Grammars {
   constructor(productions: Grammar.Productions<Token>) {
     super(productions)
 
-    for (const [k, v] of this.getProductions()) {
-      this._follows.set(k, new Set([$end]))
-      break
-    }
     this.getProductions().forEach((_, k) => this._firsts.set(k, this.first(k)) && this._follows.set(k, this.follow(k)))
   }
 
@@ -53,8 +49,9 @@ export default class LL1Grammars extends Grammars {
   private follow(symbol: Grammar.Symbol): Set<Grammar.Symbol> {
     const indexSet = this._symbolIndexMap.get(symbol)
     const set = this._follows.get(symbol)
+    if (set) return set
 
-    const newSet = set ? set : new Set()
+    const newSet = new Set()
     if (indexSet) {
       indexSet.forEach(([n, a, i]) => {
         const rest = a.slice(i + 1)
@@ -65,7 +62,9 @@ export default class LL1Grammars extends Grammars {
         firstSet.delete(epsilon)
         firstSet.forEach(s => newSet.add(s))
       })
-    } else throw new Error(`NonTerminal '${symbol}' is not in productinos.`)
+    } else {
+      if (symbol !== $accept) throw new Error(`NonTerminal '${symbol}' is not in productinos.`)
+    }
     return newSet
   }
 }

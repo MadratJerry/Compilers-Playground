@@ -1,6 +1,7 @@
 import { Token } from '@/lib/tokenizer'
 import * as Grammar from './grammarTypes'
 
+export const $accept = '$accept'
 export const $end = '$end'
 export const epsilon = 'ϵ'
 export const NonTerminal = 'NonTerminal'
@@ -12,6 +13,10 @@ class Grammars {
   protected readonly _symbolIndexMap: Grammar.SymbolIndexMap<Grammar.Symbol> = new Map()
 
   constructor(productions: Grammar.Productions<Token>) {
+    productions = [
+      [new Token(0, $accept, NonTerminal), [[productions[0][0], new Token(0, $end, Terminal)]]],
+      ...productions,
+    ]
     for (const production of productions) {
       const [symbol, alternatives] = production
       for (const alternative of alternatives)
