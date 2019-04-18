@@ -8,44 +8,41 @@ export const NonTerminal = 'NonTerminal'
 export const Terminal = 'Terminal'
 
 class Grammars {
-  private readonly _productions: Grammar.ProductionsMap<Grammar.Symbol> = new Map()
-  private readonly _symbolMap: Grammar.SymbolMap = new Map([[epsilon, Terminal]])
-  protected readonly _symbolIndexMap: Grammar.SymbolIndexMap<Grammar.Symbol> = new Map()
+  private readonly _productions: Grammar.Productions<Grammar.Symbol>
+  private readonly _alternativesMap: Grammar.AlternativesMap<Grammar.Symbol> = new Map()
+  private readonly _typeMap: Grammar.TypeMap = new Map([[epsilon, Terminal]])
+  protected readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
 
   constructor(productions: Grammar.Productions<Token>) {
-    productions = [
-      [new Token(0, $accept, NonTerminal), [[productions[0][0], new Token(0, $end, Terminal)]]],
-      ...productions,
-    ]
-    for (const production of productions) {
-      const [symbol, alternatives] = production
-      for (const alternative of alternatives)
-        this.addProduction(this.addSymbol(symbol), alternative.map(t => this.addSymbol(t)))
-    }
+    this._productions = productions.map(([symbol, alternative]) =>
+      this.addProduction(this.addSymbol(symbol), alternative.map(t => this.addSymbol(t))),
+    )
+    this._productions.push([$accept, [this._productions[0][0], $end]])
+    this._productions.sort()
   }
 
-  public getProductions(): Grammar.ProductionsMap<Grammar.Symbol> {
+  public getProductions(): Grammar.Productions<Grammar.Symbol> {
     return this._productions
   }
 
   public getAlternatives(symbol: Grammar.Symbol): Grammar.Alternatives<Grammar.Symbol> {
-    let alternatives = this._productions.get(symbol)
+    let alternatives = this._alternativesMap.get(symbol)
     if (alternatives) return alternatives
     else {
       alternatives = []
-      this._productions.set(symbol, alternatives)
+      this._alternativesMap.set(symbol, alternatives)
       return alternatives
     }
   }
 
   public getSymbolType(symbol: string): string | undefined {
-    return this._symbolMap.get(symbol)
+    return this._typeMap.get(symbol)
   }
 
   private addSymbol(symbol: Token): string {
-    const symbolType = this._symbolMap.get(symbol.token)
+    const symbolType = this._typeMap.get(symbol.token)
     if (symbolType === undefined) {
-      this._symbolMap.set(symbol.token, symbol.type)
+      this._typeMap.set(symbol.token, symbol.type)
     } else {
       if (symbolType !== symbol.type)
         throw new Error(`The symbol '${symbol.token} can't be both ${symbolType} and ${symbol.type}`)
@@ -53,24 +50,24 @@ class Grammars {
     return symbol.token
   }
 
-  private addProduction(symbol: Grammar.Symbol, alternative: Grammar.Alternative<Grammar.Symbol>) {
+  private addProduction(
+    symbol: Grammar.Symbol,
+    alternative: Grammar.Alternative<Grammar.Symbol>,
+  ): Grammar.Production<Grammar.Symbol> {
     if (alternative.length === 0) alternative = [epsilon]
+    const production: Grammar.Production<Grammar.Symbol> = [symbol, alternative]
     const alternatives = this.getAlternatives(symbol)
     alternatives.push(alternative)
-    alternative.forEach((s, i) => this.addSymbolIndex(s, symbol, alternative, i))
+    alternative.forEach((s, i) => this.addSymbolIndex(s, production, i))
+    return production
   }
 
-  private addSymbolIndex(
-    symbol: Grammar.Symbol,
-    nonTerminal: Grammar.Symbol,
-    alternative: Grammar.Alternative<Grammar.Symbol>,
-    index: number,
-  ) {
-    const indexSet = this._symbolIndexMap.get(symbol)
+  private addSymbolIndex(symbol: Grammar.Symbol, production: Grammar.Production<Grammar.Symbol>, index: number) {
+    const indexSet = this._indexMap.get(symbol)
     if (indexSet) {
-      indexSet.add([nonTerminal, alternative, index])
+      indexSet.add([production, index])
     } else {
-      this._symbolIndexMap.set(symbol, new Set([[nonTerminal, alternative, index]]))
+      this._indexMap.set(symbol, new Set([[production, index]]))
     }
   }
 }
