@@ -25,6 +25,10 @@ function checkLeftRecursion() {
   }
 }
 
+function intersection<T>(a: Set<T>, b: Set<T>) {
+  return new Set([...a].filter(v => b.has(v)))
+}
+
 export default class LL1Grammars extends Grammars {
   private readonly _firsts: Grammar.Firsts<Grammar.Symbol> = new Map()
   private readonly _follows: Grammar.Follows<Grammar.Symbol> = new Map()
@@ -33,6 +37,21 @@ export default class LL1Grammars extends Grammars {
     super(productions)
 
     this._nonTerminals.forEach(s => this._firsts.set(s, this.first(s)) && this._follows.set(s, this.follow(s)))
+
+    this._nonTerminals.forEach(s => {
+      const loc = this._productionsIndexMap.get(s)
+      if (loc) {
+        const [start, end] = loc
+        for (let i = start; i < end - 1; i++)
+          for (let j = start + 1; j < end; j++) {
+            const [[, a], [, b]] = [this._productions[i], this._productions[j]]
+            if (intersection(this.first(a), this.first(b)).size > 0)
+              throw new Error(`FIRST(${a}) and FIRST(${b}) are not disjoint sets`)
+            if (this.first(a).has(epsilon) && intersection(this.first(b), this.follow(s)))
+              throw new Error(`FIRST(${b}) and FOLLOW(${b}) are not disjoint sets`)
+          }
+      }
+    })
   }
 
   public firsts(): Grammar.Firsts<Grammar.Symbol> {

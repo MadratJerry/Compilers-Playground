@@ -8,9 +8,9 @@ export const NonTerminal = 'NonTerminal'
 export const Terminal = 'Terminal'
 
 class Grammars {
-  private readonly _productions: Grammar.Productions<Grammar.Symbol>
-  private readonly _productionsIndexMap: Grammar.ProductionsIndexMap<Grammar.Symbol> = new Map()
-  private readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
+  protected readonly _productions: Grammar.Productions<Grammar.Symbol>
+  protected readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
+  protected readonly _productionsIndexMap: Grammar.ProductionsIndexMap<Grammar.Symbol> = new Map()
   protected readonly _terminals = new Set([epsilon, $end])
   protected readonly _nonTerminals = new Set([$accept])
 
