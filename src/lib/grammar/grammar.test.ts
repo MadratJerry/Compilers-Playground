@@ -12,7 +12,7 @@ function A(alternative: Grammar.Alternative<Grammar.Symbol>): Array<Token> {
 }
 
 export function adapter(productions: Grammar.Productions<Grammar.Symbol>): Grammar.Productions<Token> {
-  return productions.map(([symbol, alternatives]) => [S(symbol), alternatives.map(alternative => A(alternative))])
+  return productions.map(([symbol, alternative]) => [S(symbol), A(alternative)])
 }
 
 export function expand(firsts: Grammar.Firsts<Grammar.Symbol>): Grammar.Alternatives<Grammar.Symbol> {
@@ -20,18 +20,32 @@ export function expand(firsts: Grammar.Firsts<Grammar.Symbol>): Grammar.Alternat
 }
 
 export const case1: Grammar.Productions<Grammar.Symbol> = [
-  [`E`, [[`T`, `E'`]]],
-  [`E'`, [[`+`, `T`, `E'`], []]],
-  [`T`, [[`F`, `T'`]]],
-  [`T'`, [[`*`, `F`, `T'`], []]],
-  [`F`, [[`(`, `E`, `)`], [`id`]]],
+  [`E`, [`T`, `E'`]],
+  [`E'`, [`+`, `T`, `E'`]],
+  [`E'`, []],
+  [`T`, [`F`, `T'`]],
+  [`T'`, [`*`, `F`, `T'`]],
+  [`T'`, []],
+  [`F`, [`(`, `E`, `)`]],
+  [`F`, [`id`]],
 ]
 
-export const case2: Grammar.Productions<Grammar.Symbol> = [[`A`, [[`E`, `x`], []]], [`E`, [[`A`]]]]
+export const case2: Grammar.Productions<Grammar.Symbol> = [[`A`, [`E`, `x`]], [`A`, []], [`E`, [`A`]]]
 
 test('Grammars test case 1', () => {
   const grammars = new Grammars(adapter(case1))
-  expect([...grammars.getProductions().entries()].toString().replace(new RegExp(`${epsilon}`, 'g'), '')).toBe(
-    [[$accept, [[`E`, $end]]]].concat(case1).toString(),
+  expect(
+    grammars
+      .getProductions()
+      .toString()
+      .replace(new RegExp(`${epsilon}`, 'g'), '')
+      .split(',')
+      .sort(),
+  ).toEqual(
+    [[$accept, [`E`, $end]]]
+      .concat(case1)
+      .toString()
+      .split(',')
+      .sort(),
   )
 })
