@@ -32,7 +32,7 @@ export default class LL1Grammars extends Grammars {
   constructor(productions: Grammar.Productions<Token>) {
     super(productions)
 
-    this.getProductions().forEach((_, k) => this._firsts.set(k, this.first(k)) && this._follows.set(k, this.follow(k)))
+    this._nonTerminals.forEach(s => this._firsts.set(s, this.first(s)) && this._follows.set(s, this.follow(s)))
   }
 
   public firsts(): Grammar.Firsts<Grammar.Symbol> {
@@ -50,9 +50,8 @@ export default class LL1Grammars extends Grammars {
       else return new Set([epsilon])
     }
 
-    const type = this.getSymbolType(symbol)
-    if (type === Terminal) return new Set([symbol])
-    else if (type === NonTerminal) {
+    if (this._terminals.has(symbol)) return new Set([symbol])
+    else if (this._nonTerminals.has(symbol)) {
       const set = this._firsts.get(symbol)
       if (set) return new Set(set)
 
@@ -66,22 +65,21 @@ export default class LL1Grammars extends Grammars {
 
       this._firsts.set(symbol, newSet)
       return newSet
-    } else if (type === undefined) throw Error(`The type of '${symbol}' is unknown`)
-    else throw new Error(`Symbol can only be 'NonTerminal' or 'Terminal'`)
+    } else throw new Error(`Symbol can only be '${Terminal}' or '${NonTerminal}'`)
   }
 
   private follow(symbol: Grammar.Symbol): Set<Grammar.Symbol> {
-    const indexSet = this._symbolIndexMap.get(symbol)
+    const indexSet = this.getSymbolIndex(symbol)
     const set = this._follows.get(symbol)
     if (set) return set
 
     const newSet = new Set()
     if (indexSet) {
-      indexSet.forEach(([n, a, i]) => {
+      indexSet.forEach(([[s, a], i]) => {
         const rest = a.slice(i + 1)
         const firstSet = this.first(rest)
-        if ((rest.length === 0 || firstSet.has(epsilon)) && symbol !== n) {
-          this.follow(n).forEach(s => newSet.add(s))
+        if ((rest.length === 0 || firstSet.has(epsilon)) && symbol !== s) {
+          this.follow(s).forEach(s => newSet.add(s))
         }
         firstSet.delete(epsilon)
         firstSet.forEach(s => newSet.add(s))

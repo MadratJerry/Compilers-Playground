@@ -10,14 +10,15 @@ export const Terminal = 'Terminal'
 class Grammars {
   private readonly _productions: Grammar.Productions<Grammar.Symbol>
   private readonly _alternativesMap: Grammar.AlternativesMap<Grammar.Symbol> = new Map()
-  private readonly _typeMap: Grammar.TypeMap = new Map([[epsilon, Terminal]])
-  protected readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
+  private readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
+  protected readonly _terminals = new Set([epsilon, $end])
+  protected readonly _nonTerminals = new Set([$accept])
 
   constructor(productions: Grammar.Productions<Token>) {
     this._productions = productions.map(([symbol, alternative]) =>
       this.addProduction(this.addSymbol(symbol), alternative.map(t => this.addSymbol(t))),
     )
-    this._productions.push([$accept, [this._productions[0][0], $end]])
+    this._productions.push(this.addProduction($accept, [this._productions[0][0], $end]))
     this._productions.sort()
   }
 
@@ -35,19 +36,21 @@ class Grammars {
     }
   }
 
-  public getSymbolType(symbol: string): string | undefined {
-    return this._typeMap.get(symbol)
+  protected getSymbolIndex(symbol: Grammar.Symbol) {
+    return this._indexMap.get(symbol)
   }
 
-  private addSymbol(symbol: Token): string {
-    const symbolType = this._typeMap.get(symbol.token)
-    if (symbolType === undefined) {
-      this._typeMap.set(symbol.token, symbol.type)
-    } else {
-      if (symbolType !== symbol.type)
-        throw new Error(`The symbol '${symbol.token} can't be both ${symbolType} and ${symbol.type}`)
-    }
-    return symbol.token
+  private addSymbol({ token, type }: Token): string {
+    if (type === Terminal) {
+      if (this._nonTerminals.has(token))
+        throw new Error(`The symbol '${token} can't be both ${Terminal} and ${NonTerminal}`)
+      this._terminals.add(token)
+    } else if (type === NonTerminal) {
+      if (this._terminals.has(token))
+        throw new Error(`The symbol '${token} can't be both ${Terminal} and ${NonTerminal}`)
+      this._nonTerminals.add(token)
+    } else throw new Error(`Symbol can only be '${Terminal}' and '${NonTerminal}'`)
+    return token
   }
 
   private addProduction(
