@@ -9,7 +9,7 @@ export const Terminal = 'Terminal'
 
 class Grammars {
   private readonly _productions: Grammar.Productions<Grammar.Symbol>
-  private readonly _alternativesMap: Grammar.AlternativesMap<Grammar.Symbol> = new Map()
+  private readonly _productionsIndexMap: Grammar.ProductionsIndexMap<Grammar.Symbol> = new Map()
   private readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
   protected readonly _terminals = new Set([epsilon, $end])
   protected readonly _nonTerminals = new Set([$accept])
@@ -20,20 +20,21 @@ class Grammars {
     )
     this._productions.push(this.addProduction($accept, [this._productions[0][0], $end]))
     this._productions.sort()
-  }
-
-  public getProductions(): Grammar.Productions<Grammar.Symbol> {
-    return this._productions
-  }
-
-  public getAlternatives(symbol: Grammar.Symbol): Grammar.Alternatives<Grammar.Symbol> {
-    let alternatives = this._alternativesMap.get(symbol)
-    if (alternatives) return alternatives
-    else {
-      alternatives = []
-      this._alternativesMap.set(symbol, alternatives)
-      return alternatives
+    for (let i = 0, last = 0; i <= this._productions.length; i++) {
+      if ((this._productions[i] || [])[0] !== (this._productions[last] || [])[0]) {
+        this._productionsIndexMap.set(this._productions[last][0], [last, i])
+        last = i
+      }
     }
+  }
+
+  public getProductions(symbol?: Grammar.Symbol): Grammar.Productions<Grammar.Symbol> {
+    if (symbol) {
+      const loc = this._productionsIndexMap.get(symbol)
+      if (loc) return this._productions.slice(...loc)
+      else return []
+    }
+    return this._productions
   }
 
   protected getSymbolIndex(symbol: Grammar.Symbol) {
@@ -59,8 +60,6 @@ class Grammars {
   ): Grammar.Production<Grammar.Symbol> {
     if (alternative.length === 0) alternative = [epsilon]
     const production: Grammar.Production<Grammar.Symbol> = [symbol, alternative]
-    const alternatives = this.getAlternatives(symbol)
-    alternatives.push(alternative)
     alternative.forEach((s, i) => this.addSymbolIndex(s, production, i))
     return production
   }

@@ -56,8 +56,8 @@ export default class LL1Grammars extends Grammars {
       if (set) return new Set(set)
 
       const newSet = new Set()
-      const alternatives = this.getAlternatives(symbol)
-      for (const alternative of alternatives) {
+      const productions = this.getProductions(symbol)
+      for (const [, alternative] of productions) {
         if (alternative.length) {
           this.first(alternative[0]).forEach(s => newSet.add(s))
         }
