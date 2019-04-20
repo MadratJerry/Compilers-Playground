@@ -11,8 +11,8 @@ class Grammars {
   protected readonly _productions: Grammar.Productions<Grammar.Symbol>
   protected readonly _indexMap: Grammar.IndexMap<Grammar.Symbol> = new Map()
   protected readonly _productionsIndexMap: Grammar.ProductionsIndexMap<Grammar.Symbol> = new Map()
-  protected readonly _terminals = new Set([epsilon, $end])
-  protected readonly _nonTerminals = new Set([$accept])
+  public readonly terminals = new Set([$end])
+  public readonly nonTerminals = new Set([$accept])
 
   constructor(productions: Grammar.Productions<Token>) {
     this._productions = productions.map(([symbol, alternative]) =>
@@ -43,13 +43,13 @@ class Grammars {
 
   private addSymbol({ token, type }: Token): string {
     if (type === Terminal) {
-      if (this._nonTerminals.has(token))
+      if (this.nonTerminals.has(token))
         throw new Error(`The symbol '${token} can't be both ${Terminal} and ${NonTerminal}`)
-      this._terminals.add(token)
+      this.terminals.add(token)
     } else if (type === NonTerminal) {
-      if (this._terminals.has(token))
+      if (this.terminals.has(token))
         throw new Error(`The symbol '${token} can't be both ${Terminal} and ${NonTerminal}`)
-      this._nonTerminals.add(token)
+      this.nonTerminals.add(token)
     } else throw new Error(`Symbol can only be '${Terminal}' and '${NonTerminal}'`)
     return token
   }
