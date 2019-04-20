@@ -32,6 +32,20 @@ export const case1: Grammar.Productions<Grammar.Symbol> = [
 
 export const case2: Grammar.Productions<Grammar.Symbol> = [[`A`, [`E`, `x`]], [`A`, []], [`E`, [`A`]]]
 
+export const case3: Grammar.Productions<Grammar.Symbol> = [
+  [`S`, [`i`, `E`, `t`, `S`, `S'`]],
+  [`S`, [`a`]],
+  [`S'`, [`e`, `S`]],
+  [`S'`, []],
+  [`E`, [`b`]],
+]
+
+export const case4: Grammar.Productions<Grammar.Symbol> = [
+  [`A`, [`if`, `(`, `E`, `)`]],
+  [`A`, [`if`, `(`, `E`, `)`, `else`, `A`]],
+  [`E`, [`A`]],
+]
+
 test('Grammars test case 1', () => {
   const grammars = new Grammars(adapter(case1))
   expect(
