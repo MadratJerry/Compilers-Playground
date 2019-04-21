@@ -4,6 +4,8 @@ import { ASTNode } from './ASTNode'
 
 type PredictiveTable = Map<Symbol, Map<Symbol, number>>
 
+const stringRegex = /"(.*)"/
+
 export class LL1Parser {
   private readonly _predictiveTable: PredictiveTable = new Map()
   private readonly _grammar: LL1Grammar
@@ -29,21 +31,22 @@ export class LL1Parser {
     let index = 0,
       X = $accept
 
-    while (X !== $end) {
+    while (X !== $end && tokens[index]) {
       const token = tokens[index]
 
       if (this._grammar.terminals.has(X)) {
-        if (token.type === X || token.token === X) {
+        if (X.match(stringRegex) ? token.token === X.slice(1, -1) : token.type === X) {
+          stack[stack.length - 1].symbol = token.token
           stack.pop()
           index++
         } else throw new Error()
-      } else if (this.getM(X, token.type) === undefined && this.getM(X, token.token) === undefined) {
+      } else if (this.getM(X, token.type) === undefined && this.getM(X, `"${token.token}"`) === undefined) {
         throw new Error()
       } else {
         const productions = this._grammar.getProductions()
         const production =
           this.getM(X, token.type) === undefined
-            ? productions[this.getM(X, token.token)!]
+            ? productions[this.getM(X, `"${token.token}"`)!]
             : productions[this.getM(X, token.type)!]
         const [, alternative] = production
         const top = stack.pop()!

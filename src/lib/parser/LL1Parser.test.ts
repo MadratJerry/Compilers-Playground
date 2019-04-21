@@ -18,23 +18,23 @@ test('LL1 Parser test case 1', () => {
   const parser = new LL1Parser(new LL1Grammar(case1))
   expect(parser.getPredictiveTable()).toEqual(
     new Map([
-      [$accept, new Map([['(', 0], ['id', 0]])],
-      [`E'`, new Map([[`+`, 2], [')', 1], [$end, 1]])],
-      [`E`, new Map([[`(`, 3], ['id', 3]])],
-      [`F`, new Map([[`(`, 4], ['id', 5]])],
-      [`T'`, new Map([[`*`, 7], ['+', 6], [')', 6], [$end, 6]])],
-      [`T`, new Map([[`(`, 8], ['id', 8]])],
+      [$accept, new Map([['"("', 0], ['id', 0]])],
+      [`E'`, new Map([[`"+"`, 2], ['")"', 1], [$end, 1]])],
+      [`E`, new Map([[`"("`, 3], ['id', 3]])],
+      [`F`, new Map([[`"("`, 4], ['id', 5]])],
+      [`T'`, new Map([[`"*"`, 7], ['"+"', 6], ['")"', 6], [$end, 6]])],
+      [`T`, new Map([[`"("`, 8], ['id', 8]])],
     ]),
   )
 
   const ast = parser.parse([
-    new Token(0, 'id', 'identifier'),
+    new Token(0, 'a', 'id'),
     new Token(0, '+', 'symbol'),
-    new Token(0, 'id', 'identifier'),
+    new Token(0, 'b', 'id'),
     new Token(0, '*', 'oprator'),
-    new Token(0, 'id', 'identifier'),
-    new Token(0, $end, 'oprator'),
+    new Token(0, 'c', 'id'),
+    new Token(0, $end, $end),
   ])
 
-  expect(dfs(ast)).toBe('id + id * id $end')
+  expect(dfs(ast)).toBe('a + b * c $end')
 })

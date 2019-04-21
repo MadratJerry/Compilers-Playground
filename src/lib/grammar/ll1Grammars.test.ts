@@ -11,23 +11,23 @@ test('LL1 Grammars test', () => {
 
   expect(sort(expand(grammars.firsts()))).toEqual(
     sort([
-      [$accept, '(', 'id'],
-      ['F', '(', 'id'],
-      ['T', '(', 'id'],
-      ['E', '(', 'id'],
-      [`E'`, '+', epsilon],
-      [`T'`, '*', epsilon],
+      [$accept, '"("', 'id'],
+      ['F', '"("', 'id'],
+      ['T', '"("', 'id'],
+      ['E', '"("', 'id'],
+      [`E'`, '"+"', epsilon],
+      [`T'`, '"*"', epsilon],
     ]),
   )
 
   expect(sort(expand(grammars.follows()))).toEqual(
     sort([
       [$accept],
-      ['F', $end, ')', '+', '*'],
-      ['T', $end, ')', '+'],
-      ['E', $end, ')'],
-      [`E'`, $end, ')'],
-      [`T'`, $end, ')', '+'],
+      ['F', $end, '")"', '"+"', '"*"'],
+      ['T', $end, '")"', '"+"'],
+      ['E', $end, '")"'],
+      [`E'`, $end, '")"'],
+      [`T'`, $end, '")"', '"+"'],
     ]),
   )
 })

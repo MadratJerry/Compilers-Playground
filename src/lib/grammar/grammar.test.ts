@@ -6,12 +6,12 @@ export function expand(firsts: Firsts): Alternatives {
 
 export const case1: Productions = [
   [`E`, [`T`, `E'`]],
-  [`E'`, [`+`, `T`, `E'`]],
+  [`E'`, [`"+"`, `T`, `E'`]],
   [`E'`, []],
   [`T`, [`F`, `T'`]],
-  [`T'`, [`*`, `F`, `T'`]],
+  [`T'`, [`"*"`, `F`, `T'`]],
   [`T'`, []],
-  [`F`, [`(`, `E`, `)`]],
+  [`F`, [`"("`, `E`, `")"`]],
   [`F`, [`id`]],
 ]
 
