@@ -1,9 +1,9 @@
 export type Symbol = string
-export type Alternative<T> = Array<T>
-export type Alternatives<T> = Array<Alternative<T>>
-export type Production<T> = [T, Alternative<T>]
-export type Productions<T> = Array<Production<T>>
-export type ProductionsIndexMap<T> = Map<T, [number, number]>
-export type Firsts<T> = Map<T, Set<T>>
-export type Follows<T> = Map<T, Set<T>>
-export type IndexMap<T> = Map<T, Set<[Production<T>, number]>>
+export type Alternative = Array<Symbol>
+export type Alternatives = Array<Alternative>
+export type Production = [Symbol, Alternative]
+export type Productions = Array<Production>
+export type ProductionsIndexMap = Map<Symbol, [number, number]>
+export type Firsts = Map<Symbol, Set<Symbol>>
+export type Follows = Map<Symbol, Set<Symbol>>
+export type IndexMap = Map<Symbol, Set<[Production, number]>>

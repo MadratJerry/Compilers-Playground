@@ -1,25 +1,10 @@
-import Grammars, { epsilon, $accept, $end } from './grammars'
-import * as Grammar from './grammarTypes'
-import { Token } from '../tokenizer'
+import { Grammar, epsilon, $accept, $end, Productions, Firsts, Alternatives } from '.'
 
-function S(symbol: Grammar.Symbol): Token {
-  if ((symbol >= 'A' && symbol <= 'Z') || symbol.match(`'`)) return new Token(0, symbol, 'NonTerminal')
-  else return new Token(0, symbol, 'Terminal')
-}
-
-function A(alternative: Grammar.Alternative<Grammar.Symbol>): Array<Token> {
-  return alternative.map(symbol => S(symbol))
-}
-
-export function adapter(productions: Grammar.Productions<Grammar.Symbol>): Grammar.Productions<Token> {
-  return productions.map(([symbol, alternative]) => [S(symbol), A(alternative)])
-}
-
-export function expand(firsts: Grammar.Firsts<Grammar.Symbol>): Grammar.Alternatives<Grammar.Symbol> {
+export function expand(firsts: Firsts): Alternatives {
   return [...firsts.entries()].map(([s, a]) => [s, ...a.values()]).sort()
 }
 
-export const case1: Grammar.Productions<Grammar.Symbol> = [
+export const case1: Productions = [
   [`E`, [`T`, `E'`]],
   [`E'`, [`+`, `T`, `E'`]],
   [`E'`, []],
@@ -30,9 +15,9 @@ export const case1: Grammar.Productions<Grammar.Symbol> = [
   [`F`, [`id`]],
 ]
 
-export const case2: Grammar.Productions<Grammar.Symbol> = [[`A`, [`E`, `x`]], [`A`, []], [`E`, [`A`]]]
+export const case2: Productions = [[`A`, [`E`, `x`]], [`A`, []], [`E`, [`A`]]]
 
-export const case3: Grammar.Productions<Grammar.Symbol> = [
+export const case3: Productions = [
   [`S`, [`i`, `E`, `t`, `S`, `S'`]],
   [`S`, [`a`]],
   [`S'`, [`e`, `S`]],
@@ -40,14 +25,14 @@ export const case3: Grammar.Productions<Grammar.Symbol> = [
   [`E`, [`b`]],
 ]
 
-export const case4: Grammar.Productions<Grammar.Symbol> = [
+export const case4: Productions = [
   [`A`, [`if`, `(`, `E`, `)`]],
   [`A`, [`if`, `(`, `E`, `)`, `else`, `A`]],
   [`E`, [`A`]],
 ]
 
 test('Grammars test case 1', () => {
-  const grammars = new Grammars(adapter(case1))
+  const grammars = new Grammar(case1)
   expect(
     grammars
       .getProductions()

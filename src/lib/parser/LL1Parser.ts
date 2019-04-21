@@ -1,23 +1,21 @@
-import LL1Grammars from '@/lib/grammar/ll1Grammars'
-import * as Grammar from '@/lib/grammar/grammarTypes'
-import Grammars, { epsilon, $accept, $end } from '@/lib/grammar/grammars'
+import { LL1Grammar, epsilon, $accept, $end, Symbol } from '@/lib/grammar'
 import { Token } from '@/lib/tokenizer'
-import ASTNode from './ASTNode'
+import { ASTNode } from './ASTNode'
 
-type PredictiveTable = Map<Grammar.Symbol, Map<Grammar.Symbol, number>>
+type PredictiveTable = Map<Symbol, Map<Symbol, number>>
 
-export default class LL1Parser {
+export class LL1Parser {
   private readonly _predictiveTable: PredictiveTable = new Map()
-  private readonly _grammars: Grammars
+  private readonly _grammar: LL1Grammar
 
-  constructor(grammars: LL1Grammars) {
-    this._grammars = grammars
-    grammars.getProductions().forEach((production, i) => {
+  constructor(grammar: LL1Grammar) {
+    this._grammar = grammar
+    grammar.getProductions().forEach((production, i) => {
       const [symbol, alternative] = production
-      const firstSet = grammars.first(alternative)
-      const add = (s: Grammar.Symbol) => (grammars.terminals.has(s) ? this.addProduction(i, symbol, s) : null)
+      const firstSet = grammar.first(alternative)
+      const add = (s: Symbol) => (grammar.terminals.has(s) ? this.addProduction(i, symbol, s) : null)
       firstSet.forEach(add)
-      if (firstSet.has(epsilon)) grammars.follow(symbol).forEach(add)
+      if (firstSet.has(epsilon)) grammar.follow(symbol).forEach(add)
     })
   }
 
@@ -34,7 +32,7 @@ export default class LL1Parser {
     while (X !== $end) {
       const token = tokens[index]
 
-      if (this._grammars.terminals.has(X)) {
+      if (this._grammar.terminals.has(X)) {
         if (token.type === X || token.token === X) {
           stack.pop()
           index++
@@ -42,14 +40,14 @@ export default class LL1Parser {
       } else if (this.getM(X, token.type) === undefined && this.getM(X, token.token) === undefined) {
         throw new Error()
       } else {
-        const productions = this._grammars.getProductions()
+        const productions = this._grammar.getProductions()
         const production =
           this.getM(X, token.type) === undefined
             ? productions[this.getM(X, token.token)!]
             : productions[this.getM(X, token.type)!]
         const [, alternative] = production
         const top = stack.pop()!
-        top.children = alternative.filter(s => s !== epsilon).map(s => new ASTNode(s, top))
+        top.children = alternative.map(s => new ASTNode(s, top))
         stack.push(...[...top.children].reverse())
       }
 
@@ -59,14 +57,14 @@ export default class LL1Parser {
     return root
   }
 
-  private getM(nonTerminal: Grammar.Symbol, terminal: Grammar.Symbol): number | undefined {
+  private getM(nonTerminal: Symbol, terminal: Symbol): number | undefined {
     const tMap = this._predictiveTable.get(nonTerminal)
     if (tMap) {
       return tMap.get(terminal)
     } else return undefined
   }
 
-  private addProduction(index: number, nonTerminal: Grammar.Symbol, terminal: Grammar.Symbol) {
+  private addProduction(index: number, nonTerminal: Symbol, terminal: Symbol) {
     let tMap = this._predictiveTable.get(nonTerminal)
     if (!tMap) {
       tMap = new Map()
