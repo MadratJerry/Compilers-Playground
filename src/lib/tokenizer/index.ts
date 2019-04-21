@@ -1,5 +1,4 @@
-import Monarch from './monarch'
-import Token from './token'
-
-export { Token }
-export default Monarch
+export * from './token'
+export * from './monarch'
+export * from './monarchTypes'
+export * from './monarchCompile'

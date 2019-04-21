@@ -1,6 +1,5 @@
 import { IMonarchLanguage, IMonarchState, ICompiledMonarchLanguage, ICompiledMonarchLanguageRule } from './monarchTypes'
-import compile from './monarchCompile'
-import Token from './token'
+import { Token, compile } from '.'
 
 class MonarchTokenizeContext {
   public index: number = 0
@@ -22,7 +21,7 @@ class MonarchTokenizeContext {
   }
 }
 
-class Monarch {
+export class Monarch {
   private readonly _ml: ICompiledMonarchLanguage
   private readonly stack: IMonarchState[] = []
 
@@ -102,5 +101,3 @@ class Monarch {
     return groupResult ? groupResult.length - 1 : 0
   }
 }
-
-export default Monarch

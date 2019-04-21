@@ -1,4 +1,4 @@
-export default class Token {
+export class Token {
   public readonly offset: number
   public readonly token: string
   public readonly type: string

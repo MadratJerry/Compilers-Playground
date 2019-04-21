@@ -1,6 +1,6 @@
-import AbstractGraph from './abstractGraph'
+import { AbstractGraph } from '.'
 
-class SimpleGraph<VertexType> extends AbstractGraph<VertexType> {
+export class SimpleGraph<VertexType> extends AbstractGraph<VertexType> {
   private readonly _map: Map<number, Set<number>> = new Map()
 
   public addEdge(from: VertexType, to: VertexType) {
@@ -23,5 +23,3 @@ class SimpleGraph<VertexType> extends AbstractGraph<VertexType> {
     if (vertexSet) vertexSet.delete(toId)
   }
 }
-
-export default SimpleGraph

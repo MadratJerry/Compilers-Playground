@@ -13,7 +13,7 @@ const builtInExpressions = {
   ['@']: /^.*$/,
 }
 
-export default function compile(json: IMonarchLanguage): ICompiledMonarchLanguage {
+export function compile(json: IMonarchLanguage): ICompiledMonarchLanguage {
   const ml: ICompiledMonarchLanguage = { tokenizer: {} }
 
   if (!json.tokenizer || typeof json.tokenizer !== 'object')

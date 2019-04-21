@@ -1,4 +1,4 @@
-export default abstract class AbstractGraph<VertexType> {
+export abstract class AbstractGraph<VertexType> {
   private _id: number = 0
   private readonly _vertexMap: Map<VertexType, number> = new Map()
 

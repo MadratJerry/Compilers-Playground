@@ -1,5 +1,3 @@
-import AbstractGraph from './abstractGraph'
-import SimpleGraph from './simpleGraph'
-import Graph from './graph'
-
-export { AbstractGraph, SimpleGraph, Graph }
+export * from './abstractGraph'
+export * from './simpleGraph'
+export * from './graph'

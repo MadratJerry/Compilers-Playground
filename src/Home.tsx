@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import MonacoEditor from 'react-monaco-editor'
-import Monarch from '@/lib/tokenizer'
-import Token from '@/lib/tokenizer/token'
 import simpleC from '@/lib/languages/simpleC'
 import NavagationButton from '@/components/NavagationButton'
+import { Monarch, Token } from './lib/tokenizer'
 
 const tokenizer = new Monarch(simpleC)
 
