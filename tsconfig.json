@@ -25,7 +25,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "jsx": "preserve",
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "experimentalDecorators": true
   },
   "extends": "./tsconfig.paths.json",
   "include": [
