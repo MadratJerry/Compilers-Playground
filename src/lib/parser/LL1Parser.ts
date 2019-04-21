@@ -2,6 +2,7 @@ import LL1Grammars from '@/lib/grammar/ll1Grammars'
 import * as Grammar from '@/lib/grammar/grammarTypes'
 import Grammars, { epsilon, $accept, $end } from '@/lib/grammar/grammars'
 import { Token } from '@/lib/tokenizer'
+import ASTNode from './ASTNode'
 
 type PredictiveTable = Map<Grammar.Symbol, Map<Grammar.Symbol, number>>
 
@@ -24,16 +25,16 @@ export default class LL1Parser {
     return this._predictiveTable
   }
 
-  public parse(tokens: Token[]) {
-    const stack = [$accept]
+  public parse(tokens: Token[]): ASTNode {
+    const root = new ASTNode($accept)
+    const stack = [root]
     let index = 0,
       X = $accept
 
     while (X !== $end) {
       const token = tokens[index]
 
-      if (X === epsilon) stack.pop()
-      else if (this._grammars.terminals.has(X)) {
+      if (this._grammars.terminals.has(X)) {
         if (token.type === X || token.token === X) {
           stack.pop()
           index++
@@ -47,12 +48,15 @@ export default class LL1Parser {
             ? productions[this.getM(X, token.token)!]
             : productions[this.getM(X, token.type)!]
         const [, alternative] = production
-        stack.pop()
-        stack.push(...[...alternative].reverse())
+        const top = stack.pop()!
+        top.children = alternative.filter(s => s !== epsilon).map(s => new ASTNode(s, top))
+        stack.push(...[...top.children].reverse())
       }
 
-      X = stack[stack.length - 1]
+      X = stack[stack.length - 1].symbol
     }
+
+    return root
   }
 
   private getM(nonTerminal: Grammar.Symbol, terminal: Grammar.Symbol): number | undefined {
