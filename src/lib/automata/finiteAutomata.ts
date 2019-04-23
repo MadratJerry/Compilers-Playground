@@ -9,6 +9,10 @@ export default class FiniteAutomata {
   map: GraphMap = new Map([[this.start, new Map()], [this.end, new Map()]])
   reverseMap: GraphMap = new Map([[this.start, new Map()], [this.end, new Map()]])
 
+  constructor(value?: string) {
+    if (value) this.addEdge(this.start, this.end, value)
+  }
+
   public addEdge(from: State, to: State, value: string) {
     this.addEdgeWithMap(from, to, value, this.map)
     this.addEdgeWithMap(to, from, value, this.reverseMap)
@@ -61,7 +65,7 @@ function merge(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   return a
 }
 
-function closure(a: FiniteAutomata): FiniteAutomata {
+export function closure(a: FiniteAutomata): FiniteAutomata {
   const c = clone(a)
   c.start = new State()
   c.end = new State()
@@ -72,7 +76,7 @@ function closure(a: FiniteAutomata): FiniteAutomata {
   return a
 }
 
-function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
+export function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   const c = merge(a, b)
   b.map.get(b.start)!.forEach((v, k) => c.addEdge(a.end, k, v))
   b.reverseMap.get(b.start)!.forEach((v, k) => c.addEdge(k, a.end, v))
@@ -80,7 +84,7 @@ function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   return c
 }
 
-function union(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
+export function union(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   const c = merge(a, b)
   c.start = new State()
   c.end = new State()

@@ -8,7 +8,7 @@ class MonarchTokenizeContext {
 
   pushToken(token: Token) {
     let newToken = token
-    if (token.type === this._lastToken.type) {
+    if (token.type === this._lastToken.type && token.type[0] !== '$') {
       this._tokens.pop()
       newToken = new Token(this._lastToken.offset, this._lastToken.token + token.token, token.type)
     }
