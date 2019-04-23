@@ -2,7 +2,7 @@ import React from 'react'
 import classNames from 'classnames'
 import { makeStyles } from '@material-ui/styles'
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   box: {
     width: 18,
     '& span:last-child': {

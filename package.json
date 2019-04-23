@@ -11,6 +11,7 @@
     "@types/node": "11.12.2",
     "@types/react": "16.8.10",
     "@types/react-dom": "16.8.3",
+    "@types/react-router-dom": "^4.3.2",
     "classnames": "^2.2.6",
     "monaco-editor": "^0.16.2",
     "monaco-editor-webpack-plugin": "^1.7.0",
@@ -20,6 +21,7 @@
     "react-dom": "npm:@hot-loader/react-dom",
     "react-hot-loader": "^4.8.0",
     "react-monaco-editor": "^0.25.1",
+    "react-router-dom": "^5.0.0",
     "react-scripts": "2.1.8",
     "typeface-roboto": "^0.0.54",
     "typescript": "3.4.1"
