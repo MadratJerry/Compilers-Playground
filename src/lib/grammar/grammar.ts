@@ -23,11 +23,17 @@ export class Grammar {
 
   public getProductions(symbol?: Symbol): Productions {
     if (symbol) {
-      const loc = this._productionsIndexMap.get(symbol)
+      const loc = this.getProductionsIndex(symbol)
       if (loc) return this._productions.slice(...loc)
       else return []
     }
     return this._productions
+  }
+
+  public getProductionsIndex(symbol: Symbol): [number, number] | undefined {
+    const loc = this._productionsIndexMap.get(symbol)
+    if (loc) return loc
+    else return undefined
   }
 
   protected getSymbolIndex(symbol: Symbol) {
