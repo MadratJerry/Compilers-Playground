@@ -1,4 +1,4 @@
-import { LL1Grammar, epsilon, $accept, $end, Symbol } from '@/lib/grammar'
+import { LL1Grammar, epsilon, $accept, $end, Symbol, NonTerminal, Terminal, Grammar } from '@/lib/grammar'
 import { Token } from '@/lib/tokenizer'
 import { ASTNode } from './ASTNode'
 
@@ -28,15 +28,15 @@ export class LL1Parser {
   public parse(tokens: Token[]): ASTNode {
     const root = new ASTNode($accept)
     const stack = [root]
-    let index = 0,
-      X = $accept
+    let index = 0
 
-    while (X !== $end && tokens[index]) {
-      const token = tokens[index]
+    do {
+      const X: Symbol = stack[stack.length - 1].symbol as Symbol,
+        token = tokens[index]
 
       if (this._grammar.terminals.has(X)) {
         if (X.match(stringRegex) ? token.token === X.slice(1, -1) : token.type === X) {
-          stack[stack.length - 1].symbol = token.token
+          stack[stack.length - 1].symbol = token
           stack.pop()
           index++
         } else throw new Error()
@@ -53,9 +53,7 @@ export class LL1Parser {
         top.children = alternative.map(s => new ASTNode(s, top))
         stack.push(...[...top.children].reverse())
       }
-
-      X = stack[stack.length - 1].symbol
-    }
+    } while (stack.length)
 
     return root
   }

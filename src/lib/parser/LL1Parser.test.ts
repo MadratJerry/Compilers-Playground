@@ -10,7 +10,8 @@ function dfs(node: ASTNode): string {
       .filter(s => s !== '')
       .join(' ')
   } else {
-    return node.symbol
+    if (typeof node.symbol === 'string') return node.symbol
+    else return node.symbol.token
   }
 }
 
