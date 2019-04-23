@@ -26,6 +26,8 @@ const NavagationButton = () => {
     setOpen(false)
   }
 
+  const handleListClick = () => setOpen(false)
+
   return (
     <>
       <Fab
@@ -38,7 +40,14 @@ const NavagationButton = () => {
       >
         <AnimateMenuIcon toggle={open} />
       </Fab>
-      <Popper open={open} anchorEl={anchorEl.current} transition disablePortal className={classes.popper}>
+      <Popper
+        open={open}
+        anchorEl={anchorEl.current}
+        transition
+        disablePortal
+        className={classes.popper}
+        onClick={handleListClick}
+      >
         {({ TransitionProps, placement }) => (
           <Grow
             {...TransitionProps}

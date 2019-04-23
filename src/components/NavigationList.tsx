@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { makeStyles } from '@material-ui/styles'
 import ListSubheader from '@material-ui/core/ListSubheader'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
-import Collapse from '@material-ui/core/Collapse'
-import ExpandLess from '@material-ui/icons/ExpandLess'
-import ExpandMore from '@material-ui/icons/ExpandMore'
+import { routes } from './Router'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -20,11 +18,12 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-const NavigationList = () => {
+const NavigationList: React.SFC<RouteComponentProps> = ({ location, history }) => {
   const classes = useStyles()
-  const [open, setOpen] = useState(true)
 
-  const handleClick = () => setOpen(!open)
+  const handleItemClick = (path: string) => () => {
+    history.push(path)
+  }
 
   return (
     <List
@@ -32,29 +31,13 @@ const NavigationList = () => {
       subheader={<ListSubheader component="div">Compilers Playground</ListSubheader>}
       className={classes.root}
     >
-      <ListItem button>
-        <Link to="/">
-          <ListItemText primary="Home" />
-        </Link>
-      </ListItem>
-      <ListItem button>
-        <Link to="/parsing">
-          <ListItemText primary="Parsing" />
-        </Link>
-      </ListItem>
-      <ListItem button onClick={handleClick}>
-        <ListItemText primary="Other" />
-        {open ? <ExpandLess /> : <ExpandMore />}
-      </ListItem>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <List disablePadding>
-          <ListItem button className={classes.nested}>
-            <ListItemText primary="Starred" />
-          </ListItem>
-        </List>
-      </Collapse>
+      {routes.map((route, i) => (
+        <ListItem key={i} button selected={location.pathname === route.path} onClick={handleItemClick(route.path)}>
+          <ListItemText primary={route.name} />
+        </ListItem>
+      ))}
     </List>
   )
 }
 
-export default NavigationList
+export default withRouter(NavigationList)
