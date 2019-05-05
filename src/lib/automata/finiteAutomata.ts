@@ -1,12 +1,11 @@
 import { epsilon } from '@/lib/grammar'
 
-let id = 0
 export class State {
-  id = id++
+  id?: number
 }
 
 type GraphMap = Map<State, Map<State, string>>
-export default class FiniteAutomata {
+export class FiniteAutomata {
   start: State = new State()
   end: State = new State()
   map: GraphMap = new Map()
@@ -81,6 +80,8 @@ export function closure(a: FiniteAutomata): FiniteAutomata {
 
 export function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   const c = merge(a, b)
+  c.start = a.start
+  c.end = b.end
   if (b.map.has(b.start)) b.map.get(b.start)!.forEach((v, k) => c.addEdge(a.end, k, v))
   if (b.reverseMap.has(b.start)) b.reverseMap.get(b.start)!.forEach((v, k) => c.addEdge(k, a.end, v))
   c.removeState(b.start)

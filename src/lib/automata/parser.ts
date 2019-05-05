@@ -1,7 +1,8 @@
 import { LL1Grammar, $end, $accept } from '@/lib/grammar'
 import { LL1Parser, IASTNode } from '@/lib/parser'
 import { Token, Monarch } from '@/lib/tokenizer'
-import FiniteAutomata, { closure, union, concat } from './finiteAutomata'
+import { closure, union, concat, FiniteAutomata } from './finiteAutomata'
+import { labelIndex } from './algorithm'
 
 interface ASTNode extends IASTNode<ASTNode> {
   t?: string
@@ -89,5 +90,5 @@ function convert(str: string): FiniteAutomata {
 }
 
 export function parse(text: string): FiniteAutomata {
-  return convert(dfs(parser.parse(monarch.tokenize(text).concat([new Token(0, $end, $end)]))).t!)
+  return labelIndex(convert(dfs(parser.parse(monarch.tokenize(text).concat([new Token(0, $end, $end)]))).t!))
 }
