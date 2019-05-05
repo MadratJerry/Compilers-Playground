@@ -1,13 +1,16 @@
 import { epsilon } from '@/lib/grammar'
 
-class State {}
+let id = 0
+export class State {
+  id = id++
+}
 
 type GraphMap = Map<State, Map<State, string>>
 export default class FiniteAutomata {
   start: State = new State()
   end: State = new State()
-  map: GraphMap = new Map([[this.start, new Map()], [this.end, new Map()]])
-  reverseMap: GraphMap = new Map([[this.start, new Map()], [this.end, new Map()]])
+  map: GraphMap = new Map()
+  reverseMap: GraphMap = new Map()
 
   constructor(value?: string) {
     if (value) this.addEdge(this.start, this.end, value)
@@ -73,13 +76,13 @@ export function closure(a: FiniteAutomata): FiniteAutomata {
   c.addEdge(c.start, c.end, epsilon)
   c.addEdge(a.end, c.end, epsilon)
   c.addEdge(a.end, a.start, epsilon)
-  return a
+  return c
 }
 
 export function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
   const c = merge(a, b)
-  b.map.get(b.start)!.forEach((v, k) => c.addEdge(a.end, k, v))
-  b.reverseMap.get(b.start)!.forEach((v, k) => c.addEdge(k, a.end, v))
+  if (b.map.has(b.start)) b.map.get(b.start)!.forEach((v, k) => c.addEdge(a.end, k, v))
+  if (b.reverseMap.has(b.start)) b.reverseMap.get(b.start)!.forEach((v, k) => c.addEdge(k, a.end, v))
   c.removeState(b.start)
   return c
 }
