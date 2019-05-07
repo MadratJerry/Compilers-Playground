@@ -1,76 +1,40 @@
 import { epsilon } from '@/lib/grammar'
+import { Equal } from '@/lib/enhance'
+import { dfs, labelIndex } from './algorithm'
 
-export class State {
-  id?: number
+let id = 0
+type Edge = [State, string]
+export class State implements Equal<State> {
+  public id?: number = id++
+  public out: Set<Edge> = new Set()
+  public fa: FiniteAutomata
+
+  constructor(fa: FiniteAutomata) {
+    this.fa = fa
+  }
+
+  public euqals(value: State): boolean {
+    return this.id === value.id
+  }
 }
 
-type GraphMap = Map<State, Map<State, string>>
 export class FiniteAutomata {
-  start: State = new State()
-  end: State = new State()
-  map: GraphMap = new Map()
-  reverseMap: GraphMap = new Map()
+  start: State
+  end: State
 
   constructor(value?: string) {
-    if (value) this.addEdge(this.start, this.end, value)
+    this.start = new State(this)
+    this.end = new State(this)
+    if (value !== undefined) this.start.out.add([this.end, value])
   }
 
   public addEdge(from: State, to: State, value: string) {
-    this.addEdgeWithMap(from, to, value, this.map)
-    this.addEdgeWithMap(to, from, value, this.reverseMap)
+    from.out.add([to, value])
   }
-
-  public removeEdge(from: State, to: State) {
-    this.removeEdgeWithMap(from, to, this.map)
-    this.removeEdgeWithMap(to, from, this.reverseMap)
-  }
-
-  public removeState(s: State) {
-    this.removeStateWithMap(s, this.map)
-    this.removeStateWithMap(s, this.reverseMap)
-  }
-
-  private removeStateWithMap(s: State, map: GraphMap) {
-    if (this.map.has(s)) this.map.get(s)!.forEach((v, k) => this.reverseMap.get(k)!.delete(s))
-    this.map.delete(s)
-  }
-
-  private addEdgeWithMap(from: State, to: State, value: string, map: GraphMap) {
-    const edgeMap = map.get(from)
-    if (edgeMap) {
-      edgeMap.set(to, value)
-    } else {
-      map.set(from, new Map([[to, value]]))
-    }
-  }
-
-  private removeEdgeWithMap(from: State, to: State, map: GraphMap) {
-    const edgeMap = map.get(from)
-    if (edgeMap) edgeMap.delete(to)
-  }
-}
-
-function clone(a: FiniteAutomata): FiniteAutomata {
-  return Object.assign(new FiniteAutomata(), {
-    start: a.start,
-    end: a.end,
-    map: new Map([...a.map.entries()].map(([k, v]) => [k, new Map(v)])),
-    reverseMap: new Map([...a.reverseMap.entries()].map(([k, v]) => [k, new Map(v)])),
-  })
-}
-
-function merge(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
-  a = clone(a)
-  b = clone(b)
-  a.map = new Map([...a.map.entries(), ...b.map.entries()])
-  a.reverseMap = new Map([...a.reverseMap.entries(), ...b.reverseMap.entries()])
-  return a
 }
 
 export function closure(a: FiniteAutomata): FiniteAutomata {
-  const c = clone(a)
-  c.start = new State()
-  c.end = new State()
+  const c = new FiniteAutomata()
   c.addEdge(c.start, a.start, epsilon)
   c.addEdge(c.start, c.end, epsilon)
   c.addEdge(a.end, c.end, epsilon)
@@ -79,19 +43,19 @@ export function closure(a: FiniteAutomata): FiniteAutomata {
 }
 
 export function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
-  const c = merge(a, b)
+  const c = new FiniteAutomata()
+  a.end.out = b.start.out
+  a.end.fa = b
+  b.start = a.end
   c.start = a.start
+  c.start.fa = c
   c.end = b.end
-  if (b.map.has(b.start)) b.map.get(b.start)!.forEach((v, k) => c.addEdge(a.end, k, v))
-  if (b.reverseMap.has(b.start)) b.reverseMap.get(b.start)!.forEach((v, k) => c.addEdge(k, a.end, v))
-  c.removeState(b.start)
+  c.end.fa = c
   return c
 }
 
 export function union(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
-  const c = merge(a, b)
-  c.start = new State()
-  c.end = new State()
+  const c = new FiniteAutomata()
   c.addEdge(c.start, a.start, epsilon)
   c.addEdge(c.start, b.start, epsilon)
   c.addEdge(a.end, c.end, epsilon)

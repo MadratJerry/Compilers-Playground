@@ -1,33 +1,37 @@
 import { State, FiniteAutomata } from './finiteAutomata'
 
 export function dfs(
-  f: FiniteAutomata,
+  fa: FiniteAutomata,
   connect: (from: State, to: State, value: string) => void,
   node: (s: State) => void = () => {},
-) {
-  const visited: Set<State> = new Set()
-  const walk = (n: State) => {
-    if (visited.has(n)) return
-    else {
-      visited.add(n)
-      node(n)
-    }
-    const edges = f.map.get(n)
-    if (edges)
-      edges.forEach((v, s) => {
+): FiniteAutomata {
+  const visited: Set<FiniteAutomata | State> = new Set()
+  const _node = (s: State) => {
+    if (!visited.has(s)) {
+      visited.add(s)
+      node(s)
+      s.out.forEach(([t, v]) => {
+        walk(t.fa)
         connect(
-          n,
           s,
+          t,
           v,
         )
-        walk(s)
       })
+    }
   }
-  walk(f.start)
-  return f
+  const walk = (f: FiniteAutomata): FiniteAutomata => {
+    if (!visited.has(f)) {
+      visited.add(f)
+      _node(f.start)
+      _node(f.end)
+    }
+    return f
+  }
+  return walk(fa)
 }
 
-export function labelIndex(fa: FiniteAutomata) {
+export function labelIndex(fa: FiniteAutomata): FiniteAutomata {
   let i = 0
   return dfs(fa, () => {}, f => (f.id = ++i))
 }
