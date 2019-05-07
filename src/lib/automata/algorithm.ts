@@ -9,7 +9,7 @@ export function bfs(
   const _node = (s: State) => {
     if (!visited.has(s)) {
       visited.add(s)
-      node(s)
+      if (s.id !== -1) node(s)
       s.out.forEach(([t, v]) =>
         connect(
           s,
@@ -19,16 +19,10 @@ export function bfs(
       )
     }
   }
-  const walk = (n: NFA, concat: boolean = false) => {
-    const { start, end, type, wrap } = n
-    if (!concat) _node(start)
-    if (type === 'concat') {
-      const [a, b] = <[NFA, NFA]>wrap
-      walk(a, concat)
-      walk(b, true)
-    } else {
-      wrap.forEach(a => walk(a))
-    }
+  const walk = (n: NFA) => {
+    const { start, end, wrap } = n
+    _node(start)
+    wrap.forEach(a => walk(a))
     _node(end)
   }
   walk(nfa)

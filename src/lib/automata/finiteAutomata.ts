@@ -1,11 +1,9 @@
 import { epsilon } from '@/lib/grammar'
 import { Equal } from '@/lib/enhance'
-import { bfs, labelIndex } from './algorithm'
 
-let id = 0
 type Edge = [State, string]
 export class State implements Equal<State> {
-  public id?: number = id++
+  public id?: number
   public out: Set<Edge> = new Set()
   public fa: FiniteAutomata
 
@@ -55,6 +53,8 @@ export function concat(a: NFA, b: NFA): NFA {
   c.type = 'concat'
   c.wrap = [a, b]
   a.end.out = b.start.out
+  b.start.out = new Set()
+  b.start.id = -1
   c.start = a.start
   c.end = b.end
   return c
