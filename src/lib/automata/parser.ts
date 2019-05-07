@@ -1,7 +1,7 @@
 import { LL1Grammar, $end, $accept } from '@/lib/grammar'
 import { LL1Parser, IASTNode } from '@/lib/parser'
 import { Token, Monarch } from '@/lib/tokenizer'
-import { closure, union, concat, FiniteAutomata } from './finiteAutomata'
+import { closure, union, concat, NFA } from './finiteAutomata'
 import { labelIndex } from './algorithm'
 
 interface ASTNode extends IASTNode<ASTNode> {
@@ -67,28 +67,28 @@ function walk(node: ASTNode) {
   }
 }
 
-function convert(str: string): FiniteAutomata {
-  const stack: Array<string | FiniteAutomata> = []
+function convert(str: string): NFA {
+  const stack: Array<string | NFA> = []
   str.split('').forEach(s => {
     if (s === '(' || s === '|') stack.push(s)
     else if (s === '*') {
-      stack.push(closure(<FiniteAutomata>stack.pop()))
+      stack.push(closure(<NFA>stack.pop()))
     } else if (s === ')') {
-      let a = <FiniteAutomata>stack.pop()
+      let a = <NFA>stack.pop()
       while (true) {
         const top = stack.pop()
         if (top === '(') break
-        else if (top === '|') a = union(<FiniteAutomata>stack.pop(), a)
-        else a = concat(<FiniteAutomata>top, a)
+        else if (top === '|') a = union(<NFA>stack.pop(), a)
+        else a = concat(<NFA>top, a)
       }
       stack.push(a)
     } else {
-      stack.push(new FiniteAutomata(s))
+      stack.push(new NFA(s))
     }
   })
-  return <FiniteAutomata>stack[0]
+  return <NFA>stack[0]
 }
 
-export function parse(text: string): FiniteAutomata {
+export function parse(text: string): NFA {
   return labelIndex(convert(dfs(parser.parse(monarch.tokenize(text).concat([new Token(0, $end, $end)]))).t!))
 }

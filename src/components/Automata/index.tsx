@@ -3,7 +3,7 @@ import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
 import * as d3 from 'd3'
 import dagreD3 from 'dagre-d3'
-import { parse, State, dfs, labelIndex } from '@/lib/automata'
+import { parse, State, bfs, labelIndex } from '@/lib/automata'
 import './index.css'
 
 const Automata = () => {
@@ -27,7 +27,7 @@ const Automata = () => {
         })
       }
 
-      dfs(fa, addEdge)
+      bfs(fa, addEdge)
 
       const svg = d3.select(svgRef.current),
         inner = svg.select('g'),

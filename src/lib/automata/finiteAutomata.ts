@@ -1,6 +1,6 @@
 import { epsilon } from '@/lib/grammar'
 import { Equal } from '@/lib/enhance'
-import { dfs, labelIndex } from './algorithm'
+import { bfs, labelIndex } from './algorithm'
 
 let id = 0
 type Edge = [State, string]
@@ -33,29 +33,37 @@ export class FiniteAutomata {
   }
 }
 
-export function closure(a: FiniteAutomata): FiniteAutomata {
-  const c = new FiniteAutomata()
-  c.addEdge(c.start, a.start, epsilon)
-  c.addEdge(c.start, c.end, epsilon)
-  c.addEdge(a.end, c.end, epsilon)
+export class NFA extends FiniteAutomata {
+  type: 'closure' | 'concat' | 'union' | 'basic' = 'basic'
+  wrap: [NFA, NFA] | [NFA] | [] = []
+}
+
+export function closure(a: NFA): NFA {
+  if (a.type === 'closure') return a
+  const c = new NFA()
+  c.type = 'closure'
+  c.wrap = [a]
   c.addEdge(a.end, a.start, epsilon)
+  c.addEdge(c.start, a.start, epsilon)
+  c.addEdge(a.end, c.end, epsilon)
+  c.addEdge(c.start, c.end, epsilon)
   return c
 }
 
-export function concat(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
-  const c = new FiniteAutomata()
+export function concat(a: NFA, b: NFA): NFA {
+  const c = new NFA()
+  c.type = 'concat'
+  c.wrap = [a, b]
   a.end.out = b.start.out
-  a.end.fa = b
-  b.start = a.end
   c.start = a.start
-  c.start.fa = c
   c.end = b.end
-  c.end.fa = c
   return c
 }
 
-export function union(a: FiniteAutomata, b: FiniteAutomata): FiniteAutomata {
-  const c = new FiniteAutomata()
+export function union(a: NFA, b: NFA): NFA {
+  const c = new NFA()
+  c.type = 'union'
+  c.wrap = [a, b]
   c.addEdge(c.start, a.start, epsilon)
   c.addEdge(c.start, b.start, epsilon)
   c.addEdge(a.end, c.end, epsilon)

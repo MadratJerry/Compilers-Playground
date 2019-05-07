@@ -1,37 +1,41 @@
-import { State, FiniteAutomata } from './finiteAutomata'
+import { State, NFA } from './finiteAutomata'
 
-export function dfs(
-  fa: FiniteAutomata,
+export function bfs(
+  nfa: NFA,
   connect: (from: State, to: State, value: string) => void,
   node: (s: State) => void = () => {},
-): FiniteAutomata {
-  const visited: Set<FiniteAutomata | State> = new Set()
+): NFA {
+  const visited: Set<State> = new Set()
   const _node = (s: State) => {
     if (!visited.has(s)) {
       visited.add(s)
       node(s)
-      s.out.forEach(([t, v]) => {
-        walk(t.fa)
+      s.out.forEach(([t, v]) =>
         connect(
           s,
           t,
           v,
-        )
-      })
+        ),
+      )
     }
   }
-  const walk = (f: FiniteAutomata): FiniteAutomata => {
-    if (!visited.has(f)) {
-      visited.add(f)
-      _node(f.start)
-      _node(f.end)
+  const walk = (n: NFA, concat: boolean = false) => {
+    const { start, end, type, wrap } = n
+    if (!concat) _node(start)
+    if (type === 'concat') {
+      const [a, b] = <[NFA, NFA]>wrap
+      walk(a, concat)
+      walk(b, true)
+    } else {
+      wrap.forEach(a => walk(a))
     }
-    return f
+    _node(end)
   }
-  return walk(fa)
+  walk(nfa)
+  return nfa
 }
 
-export function labelIndex(fa: FiniteAutomata): FiniteAutomata {
+export function labelIndex(nfa: NFA): NFA {
   let i = 0
-  return dfs(fa, () => {}, f => (f.id = ++i))
+  return bfs(nfa, () => {}, f => (f.id = ++i))
 }
