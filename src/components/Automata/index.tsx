@@ -5,7 +5,7 @@ import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
 import * as d3 from 'd3'
 import dagreD3 from 'dagre-d3'
-import { parse, State, bfs } from '@/lib/automata'
+import { parse, State, bfs, dfa } from '@/lib/automata'
 import './index.css'
 
 const useStyles = makeStyles(theme => ({
@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
 
 const Automata = () => {
   const classes = useStyles()
-  const [value, setValue] = useState(``)
+  const [value, setValue] = useState(`(a|b)*abb`)
   const [error, setError] = useState<Error | null>(null)
   const svgRef = useRef<SVGSVGElement>(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
 
@@ -46,6 +46,7 @@ const Automata = () => {
       }
 
       bfs(fa, addEdge)
+      dfa(fa)
 
       const svg = d3.select(svgRef.current),
         inner = svg.select('g'),

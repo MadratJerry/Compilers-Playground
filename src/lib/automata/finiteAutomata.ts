@@ -1,5 +1,5 @@
 import { epsilon } from '@/lib/grammar'
-import { Equal } from '@/lib/enhance'
+import { Equal, EqualSet } from '@/lib/enhance'
 
 type Edge = [State, string]
 export class State implements Equal<State> {
@@ -35,6 +35,8 @@ export class NFA extends FiniteAutomata {
   type: 'closure' | 'concat' | 'union' | 'basic' = 'basic'
   wrap: [NFA, NFA] | [NFA] | [] = []
 }
+
+export class DFA extends EqualSet<State> {}
 
 export function closure(a: NFA): NFA {
   if (a.type === 'closure') return a
