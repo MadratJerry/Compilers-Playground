@@ -1,8 +1,6 @@
 import { epsilon } from '@/lib/grammar'
 import { Equal, EqualSet } from '@/lib/enhance'
 
-export interface NFAState extends State<Id> {}
-
 export class Id extends Number implements Equal<Id> {
   public euqals(value?: Id): boolean {
     return value ? this.valueOf() === value.valueOf() : false
@@ -12,29 +10,45 @@ export class Id extends Number implements Equal<Id> {
 export class State<T extends Equal<T>> implements Equal<State<T>> {
   public id?: T
   public out: Set<[State<T>, string]> = new Set()
+  public label: string = ''
 
   constructor(id?: T) {
     if (id) this.id = id
   }
 
-  public euqals(value: State<T>): boolean {
-    return this.id ? this.id.euqals(value.id) : false
+  public euqals(value?: State<T>): boolean {
+    return this.id && value ? this.id.euqals(value.id) : false
   }
-}
 
-export abstract class FiniteAutomata<T extends Equal<T>> {
-  abstract start: State<T>
-  abstract end: State<T>
-  wrap: Array<any> = []
+  public toString(): string {
+    return this.label
+  }
 
-  public addEdge(from: State<T>, to: State<T>, value: string) {
+  static connect<T extends Equal<T>>(from: State<T>, to: State<T>, value: string) {
     from.out.add([to, value])
   }
 }
 
-export class NFA extends FiniteAutomata<Id> {
-  start = new State(new Id())
-  end = new State(new Id())
+export class NFAState extends State<Id> {}
+
+export class DFAState extends State<EqualSet<NFAState>> {
+  id: EqualSet<NFAState>
+
+  constructor(id: EqualSet<NFAState>) {
+    super()
+    this.id = id
+  }
+}
+
+export abstract class FiniteAutomata<T extends State<any>> {
+  abstract start: T
+  abstract end: T
+  wrap: Array<any> = []
+}
+
+export class NFA extends FiniteAutomata<NFAState> {
+  start = new NFAState(new Id())
+  end = new NFAState(new Id())
   type: 'closure' | 'concat' | 'union' | 'basic' = 'basic'
   wrap: [NFA, NFA] | [NFA] | [] = []
 
@@ -44,15 +58,20 @@ export class NFA extends FiniteAutomata<Id> {
   }
 }
 
+export class DFA extends FiniteAutomata<DFAState> {
+  start = new DFAState(new EqualSet())
+  end = new DFAState(new EqualSet())
+}
+
 export function closure(a: NFA): NFA {
   if (a.type === 'closure') return a
   const c = new NFA()
   c.type = 'closure'
   c.wrap = [a]
-  c.addEdge(a.end, a.start, epsilon)
-  c.addEdge(c.start, a.start, epsilon)
-  c.addEdge(a.end, c.end, epsilon)
-  c.addEdge(c.start, c.end, epsilon)
+  State.connect(a.end, a.start, epsilon)
+  State.connect(c.start, a.start, epsilon)
+  State.connect(a.end, c.end, epsilon)
+  State.connect(c.start, c.end, epsilon)
   return c
 }
 
@@ -72,9 +91,9 @@ export function union(a: NFA, b: NFA): NFA {
   const c = new NFA()
   c.type = 'union'
   c.wrap = [a, b]
-  c.addEdge(c.start, a.start, epsilon)
-  c.addEdge(c.start, b.start, epsilon)
-  c.addEdge(a.end, c.end, epsilon)
-  c.addEdge(b.end, c.end, epsilon)
+  State.connect(c.start, a.start, epsilon)
+  State.connect(c.start, b.start, epsilon)
+  State.connect(a.end, c.end, epsilon)
+  State.connect(b.end, c.end, epsilon)
   return c
 }
