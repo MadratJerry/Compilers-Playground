@@ -5,10 +5,11 @@ import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
 import * as d3 from 'd3'
 import dagreD3 from 'dagre-d3'
-import { parse, State, bfs, dfa } from '@/lib/automata'
+import { parse, bfs, dfa, NFAState, State } from '@/lib/automata'
 import './index.css'
+import { Equal } from '@/lib/enhance'
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   error: {
     color: '#f44336',
   },
@@ -36,7 +37,7 @@ const Automata = () => {
       g.setGraph({ rankdir: 'LR', marginx: 20, marginy: 20 })
       g.graph().transition = selection => selection.transition().duration(500)
 
-      const addEdge = (f: State, t: State, v: string) => {
+      const addEdge = <T extends Equal<T>>(f: State<T>, t: State<T>, v: string) => {
         g.setNode(f.id + '', { shape: 'circle' })
         g.setNode(t.id + '', { shape: 'circle' })
         g.setEdge(f.id + '', t.id + '', {
@@ -61,7 +62,6 @@ const Automata = () => {
       render(inner, g)
       setError(null)
     } catch (e) {
-      console.log(e)
       setError(e)
     }
   }, [value])

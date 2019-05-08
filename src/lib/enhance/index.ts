@@ -1,5 +1,5 @@
 export interface Equal<T> {
-  euqals(value: T): boolean
+  euqals(value?: T): boolean
 }
 
 export class EqualSet<T extends Equal<T>> extends Set<T> implements Equal<EqualSet<T>> {

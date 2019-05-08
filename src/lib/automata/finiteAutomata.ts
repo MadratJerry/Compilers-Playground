@@ -1,42 +1,48 @@
 import { epsilon } from '@/lib/grammar'
 import { Equal, EqualSet } from '@/lib/enhance'
 
-type Edge = [State, string]
-export class State implements Equal<State> {
-  public id?: number
-  public out: Set<Edge> = new Set()
-  public fa: FiniteAutomata
+export interface NFAState extends State<Id> {}
 
-  constructor(fa: FiniteAutomata) {
-    this.fa = fa
-  }
-
-  public euqals(value: State): boolean {
-    return this.id === value.id
+export class Id extends Number implements Equal<Id> {
+  public euqals(value?: Id): boolean {
+    return value ? this.valueOf() === value.valueOf() : false
   }
 }
 
-export class FiniteAutomata {
-  start: State
-  end: State
+export class State<T extends Equal<T>> implements Equal<State<T>> {
+  public id?: T
+  public out: Set<[State<T>, string]> = new Set()
 
-  constructor(value?: string) {
-    this.start = new State(this)
-    this.end = new State(this)
-    if (value !== undefined) this.start.out.add([this.end, value])
+  constructor(id?: T) {
+    if (id) this.id = id
   }
 
-  public addEdge(from: State, to: State, value: string) {
+  public euqals(value: State<T>): boolean {
+    return this.id ? this.id.euqals(value.id) : false
+  }
+}
+
+export abstract class FiniteAutomata<T extends Equal<T>> {
+  abstract start: State<T>
+  abstract end: State<T>
+  wrap: Array<any> = []
+
+  public addEdge(from: State<T>, to: State<T>, value: string) {
     from.out.add([to, value])
   }
 }
 
-export class NFA extends FiniteAutomata {
+export class NFA extends FiniteAutomata<Id> {
+  start = new State(new Id())
+  end = new State(new Id())
   type: 'closure' | 'concat' | 'union' | 'basic' = 'basic'
   wrap: [NFA, NFA] | [NFA] | [] = []
-}
 
-export class DFA extends EqualSet<State> {}
+  constructor(value?: string) {
+    super()
+    if (value !== undefined) this.start.out.add([this.end, value])
+  }
+}
 
 export function closure(a: NFA): NFA {
   if (a.type === 'closure') return a
@@ -56,7 +62,7 @@ export function concat(a: NFA, b: NFA): NFA {
   c.wrap = [a, b]
   a.end.out = b.start.out
   b.start.out = new Set()
-  b.start.id = -1
+  delete b.start.id
   c.start = a.start
   c.end = b.end
   return c
