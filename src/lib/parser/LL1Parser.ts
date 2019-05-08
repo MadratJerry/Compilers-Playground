@@ -41,7 +41,7 @@ export class LL1Parser {
           index++
         } else throw new Error()
       } else if (this.getM(X, token.type) === undefined && this.getM(X, `"${token.token}"`) === undefined) {
-        throw new Error()
+        throw new Error('Unexpected grammar')
       } else {
         const productions = this._grammar.getProductions()
         const production =
