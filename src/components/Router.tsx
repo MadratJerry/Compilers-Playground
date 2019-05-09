@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import Parsing from '@/components/Parsing'
 import Home from '@/components/Home'
 import Automata from '@/components/Automata'
+import Breadcrumbs from './Breadcrumb'
 
 export const routes = [
   {
@@ -16,6 +17,11 @@ export const routes = [
     component: Automata,
   },
   {
+    path: '/tokenizer',
+    name: 'Tokenizer',
+    component: Home,
+  },
+  {
     path: '/parsing',
     name: 'Parsing',
     component: Parsing,
@@ -24,12 +30,15 @@ export const routes = [
 
 export default () => {
   return (
-    <Router>
-      <div style={{ margin: 48 }}>
-        {routes.map((route, i) => (
-          <Route key={i} exact path={route.path} component={route.component} />
-        ))}
-      </div>
-    </Router>
+    <>
+      <Router>
+        <Breadcrumbs />
+        <div style={{ margin: 48 }}>
+          {routes.map((route, i) => (
+            <Route key={i} exact path={route.path} component={route.component} />
+          ))}
+        </div>
+      </Router>
+    </>
   )
 }
