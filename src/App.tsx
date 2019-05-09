@@ -5,7 +5,7 @@ import { createMuiTheme } from '@material-ui/core/styles'
 import { ThemeProvider } from '@material-ui/styles'
 import Router from '@/components/Router'
 
-const theme = createMuiTheme({ typography: { useNextVariants: true } })
+const theme = createMuiTheme()
 
 const App = () => {
   return (

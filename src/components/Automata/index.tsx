@@ -1,19 +1,21 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import classNames from 'classnames'
-import { makeStyles } from '@material-ui/styles'
+import { makeStyles, createStyles } from '@material-ui/styles'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
 import { parse, dfa, FiniteAutomata } from '@/lib/automata'
 import AutomataView from './AutomataView'
 
-const useStyles = makeStyles(() => ({
-  error: {
-    color: '#f44336',
-  },
-  expression: {
-    marginLeft: 14,
-  },
-}))
+const useStyles = makeStyles(() =>
+  createStyles({
+    error: {
+      color: '#f44336',
+    },
+    expression: {
+      marginLeft: 14,
+    },
+  }),
+)
 
 const Automata = () => {
   const classes = useStyles()

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import MonacoEditor, { EditorDidMount, ChangeHandler } from 'react-monaco-editor'
 import * as monaco from 'monaco-editor'
+import { makeStyles, createStyles } from '@material-ui/styles'
 import Typography from '@material-ui/core/Typography'
 import Stepper from '@material-ui/core/Stepper'
 import Step from '@material-ui/core/Step'
@@ -23,20 +24,21 @@ import {
   Production,
   epsilon,
 } from '@/lib/grammar'
-import { makeStyles } from '@material-ui/styles'
 import { LL1Parser } from '@/lib/parser'
 
-const useStyles = makeStyles(() => ({
-  container: {
-    display: 'flex',
-  },
-  productionIndex: {
-    margin: '0 4px',
-  },
-  tableContainer: {
-    overflow: 'scroll',
-  },
-}))
+const useStyles = makeStyles(() =>
+  createStyles({
+    container: {
+      display: 'flex',
+    },
+    productionIndex: {
+      margin: '0 4px',
+    },
+    tableContainer: {
+      overflow: 'scroll',
+    },
+  }),
+)
 
 const steps = ['Valid grammar', 'No left recursion', 'No common prefix', 'No dangling else']
 
