@@ -3,7 +3,7 @@
 .node ellipse,
 .node polygon {
   stroke: #333;
-  fill: #fff;
+  fill: none;
   stroke-width: 1.5px;
 }
 
