@@ -17,7 +17,7 @@ const useStyles = makeStyles(() => ({
 
 const Automata = () => {
   const classes = useStyles()
-  const [value, setValue] = useState(`(a|b)*abb`)
+  const [value, setValue] = useState(``)
   const [error, setError] = useState<Error | null>(null)
   const [fa, setFa] = useState<Array<FiniteAutomata<any>>>([])
 

@@ -38,13 +38,13 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
     const render = new dagreD3.render()
     render.shapes().doubleCircle = function(parent, bbox, node) {
       const r = Math.max(bbox.width, bbox.height) / 2
-
-      parent
+      const shapeSvg = parent.insert('g', ':first-child')
+      shapeSvg
         .insert('circle', ':first-child')
         .attr('x', -bbox.width / 2)
         .attr('y', -bbox.height / 2)
         .attr('r', r)
-      parent
+      shapeSvg
         .insert('circle', ':first-child')
         .attr('x', -bbox.width / 2)
         .attr('y', -bbox.height / 2)
@@ -53,8 +53,7 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
       node.intersect = function(point: any) {
         return dagreD3.intersect.circle(node, r as any, point)
       }
-
-      return parent
+      return shapeSvg
     }
     // @ts-ignore
     svg.call(zoom)
@@ -62,7 +61,7 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
     render(inner, g)
   }, [fa])
   return (
-    <svg width="100%" height="300" ref={svgRef}>
+    <svg width="100%" height="300" ref={svgRef} className="automata-view">
       <g />
     </svg>
   )
