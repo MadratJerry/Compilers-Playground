@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import Parsing from '@/components/Parsing'
 import Home from '@/components/Home'
 import Automata from '@/components/Automata'
-import Breadcrumbs from './Breadcrumb'
+import Tokenizer from '@/components/Tokenizer'
+import Breadcrumbs from '@/components/Breadcrumb'
 
 export const routes = [
   {
@@ -19,7 +20,7 @@ export const routes = [
   {
     path: '/tokenizer',
     name: 'Tokenizer',
-    component: Home,
+    component: Tokenizer,
   },
   {
     path: '/parsing',
