@@ -49,7 +49,7 @@ const CustomizedBreadcrumbs: React.SFC<RouteComponentProps> = ({ history }) => {
         <Breadcrumbs aria-label="Breadcrumb">
           <StyledBreadcrumb component="a" label="Home" onClick={handleClick('/')} />
           {routes
-            .filter(({ path }) => path === pathname && path !== '/')
+            .filter(({ path }) => path === pathname)
             .map(({ name, path }) => (
               <StyledBreadcrumb
                 ref={ref}
@@ -65,7 +65,7 @@ const CustomizedBreadcrumbs: React.SFC<RouteComponentProps> = ({ history }) => {
           <ClickAwayListener onClickAway={handleOpen}>
             <div className={classes.poppers}>
               {routes
-                .filter(({ path }) => path !== pathname && path !== '/')
+                .filter(({ path }) => path !== pathname)
                 .map(({ name, path }, i) => (
                   <Zoom key={i} in={open} style={{ transitionDelay: open ? `${i * 50}ms` : '0ms' }}>
                     <StyledBreadcrumb label={name} onClick={handleClick(path)} />

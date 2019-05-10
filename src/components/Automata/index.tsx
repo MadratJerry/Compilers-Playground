@@ -41,9 +41,6 @@ const Automata = () => {
 
   return (
     <div>
-      <Typography variant="h2" gutterBottom>
-        Finite Automata
-      </Typography>
       <TextField
         error={error === null ? false : true}
         id="outlined-name"

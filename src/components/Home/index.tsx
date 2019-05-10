@@ -1,10 +1,27 @@
 import React from 'react'
+import { RouteComponentProps } from 'react-router-dom'
+import Typography from '@material-ui/core/Typography'
+import Link from '@material-ui/core/Link'
+import { routes } from '@/components/Router'
 
-const Home = () => {
+const Home: React.SFC<RouteComponentProps> = ({ history }) => {
+  const handleClick = (path: string) => () => {
+    history.push(path)
+  }
+
   return (
-    <div>
-      <h1>Compilers Playground</h1>
-    </div>
+    <>
+      <Typography variant="h1" gutterBottom>
+        Compilers Playground
+      </Typography>
+      {routes.map(({ path, name }) => (
+        <Typography variant="h2" gutterBottom>
+          <Link color="inherit" onClick={handleClick(path)}>
+            {name}
+          </Link>
+        </Typography>
+      ))}
+    </>
   )
 }
 
