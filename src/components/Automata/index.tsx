@@ -3,7 +3,7 @@ import classNames from 'classnames'
 import { makeStyles, createStyles } from '@material-ui/styles'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
-import { parse, dfa, FiniteAutomata } from '@/lib/automata'
+import { parse, dfa, FiniteAutomata, mfa } from '@/lib/automata'
 import AutomataView from './AutomataView'
 
 const useStyles = makeStyles(() =>
@@ -24,6 +24,7 @@ const Automata = () => {
   const [fa, setFa] = useState<Array<FiniteAutomata<any>>>([])
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => setValue(target.value)
+
   useEffect(() => {
     if (!value) {
       setFa([])
@@ -31,8 +32,10 @@ const Automata = () => {
       return
     }
     try {
-      const nfa = parse(value)
-      setFa([nfa, dfa(nfa)])
+      const NFA = parse(value)
+      const DFA = dfa(NFA)
+      const MFA = mfa(DFA)
+      setFa([NFA, DFA, MFA])
       setError(null)
     } catch (e) {
       setError(e)
@@ -66,6 +69,10 @@ const Automata = () => {
         DFA
       </Typography>
       <AutomataView fa={fa[1]} />
+      <Typography variant="h3" gutterBottom>
+        MFA
+      </Typography>
+      <AutomataView fa={fa[2]} />
     </div>
   )
 }

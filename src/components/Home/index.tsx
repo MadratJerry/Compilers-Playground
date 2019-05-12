@@ -15,7 +15,7 @@ const Home: React.SFC<RouteComponentProps> = ({ history }) => {
         Compilers Playground
       </Typography>
       {routes.map(({ path, name }) => (
-        <Typography variant="h2" gutterBottom>
+        <Typography variant="h2" gutterBottom key={name}>
           <Link color="inherit" onClick={handleClick(path)}>
             {name}
           </Link>

@@ -9,14 +9,14 @@ export class Id extends Number implements Equal<Id> {
 
 export class State<T extends Equal<T>> implements Equal<State<T>> {
   public id?: T
-  public out: Set<[State<T>, string]> = new Set()
+  public out: Set<[this, string]> = new Set()
   public label: string = ''
 
   constructor(id?: T) {
     if (id) this.id = id
   }
 
-  public euqals(value?: State<T>): boolean {
+  public euqals(value?: this): boolean {
     return this.id && value ? this.id.euqals(value.id) : false
   }
 
@@ -40,7 +40,16 @@ export class DFAState extends State<EqualSet<NFAState>> {
   }
 }
 
-export abstract class FiniteAutomata<T extends State<any>> {
+export class MFAState extends State<EqualSet<DFAState>> {
+  id: EqualSet<DFAState>
+
+  constructor(id: EqualSet<DFAState>) {
+    super()
+    this.id = id
+  }
+}
+
+export abstract class FiniteAutomata<T extends State<Equal<any>>> {
   abstract start: T
   abstract end: T | Array<T>
   wrap: Array<any> = []
@@ -61,6 +70,11 @@ export class NFA extends FiniteAutomata<NFAState> {
 export class DFA extends FiniteAutomata<DFAState> {
   start = new DFAState(new EqualSet())
   end: Array<DFAState> = []
+}
+
+export class MFA extends FiniteAutomata<MFAState> {
+  start = new MFAState(new EqualSet())
+  end: Array<MFAState> = []
 }
 
 export function closure(a: NFA): NFA {

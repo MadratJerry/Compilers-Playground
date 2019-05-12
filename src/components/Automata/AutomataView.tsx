@@ -13,23 +13,28 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
       svgRef.current.innerHTML = `<g></g>`
       return
     }
-    const g = new dagreD3.graphlib.Graph({})
+    const g = new dagreD3.graphlib.Graph({ multigraph: true })
     g.setGraph({ rankdir: 'LR', marginx: 20, marginy: 20 })
     g.graph().transition = selection => selection.transition().duration(500)
 
     const addEdge = <T extends Equal<T>>(f: State<T>, t: State<T>, v: string) => {
       g.setNode(`${f}`, { shape: 'circle' })
       g.setNode(`${t}`, { shape: 'circle' })
-      g.setEdge(`${f}`, `${t}`, {
-        label: v,
-        curve: d3.curveBasis,
-      })
+      g.setEdge(
+        `${f}`,
+        `${t}`,
+        {
+          label: v,
+          curve: d3.curveBasis,
+        },
+        v,
+      )
     }
 
     bfs(fa, addEdge)
     Array.isArray(fa.end)
       ? fa.end.forEach(e => g.setNode(`${e}`, { shape: 'doubleCircle' }))
-      : g.setNode(`${fa.end}`, { shape: 'doubleCircle', fill: 'white' })
+      : g.setNode(`${fa.end}`, { shape: 'doubleCircle' })
 
     const svg = d3.select(svgRef.current),
       inner = svg.select('g'),
