@@ -6,12 +6,16 @@
   border-bottom: 2px solid green;
 }
 
-.tokenDecoration:nth-child(2n):empty::after {
+.tokenDecoration:nth-child(2n):last-child:empty::after {
   content: '↵';
   color: red;
 }
 
-.tokenDecoration:nth-child(2n + 1):empty::after {
+.tokenDecoration:nth-child(2n + 1):last-child:empty::after {
   content: '↵';
   color: green;
+}
+
+.inlineTokenHighlight {
+  background: lightblue;
 }
