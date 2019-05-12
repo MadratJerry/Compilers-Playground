@@ -27,7 +27,9 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
     }
 
     bfs(fa, addEdge)
-    g.setNode(`${fa.end}`, { shape: 'doubleCircle' })
+    Array.isArray(fa.end)
+      ? fa.end.forEach(e => g.setNode(`${e}`, { shape: 'doubleCircle' }))
+      : g.setNode(`${fa.end}`, { shape: 'doubleCircle', fill: 'white' })
 
     const svg = d3.select(svgRef.current),
       inner = svg.select('g'),

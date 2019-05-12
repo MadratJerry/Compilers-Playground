@@ -42,7 +42,7 @@ export class DFAState extends State<EqualSet<NFAState>> {
 
 export abstract class FiniteAutomata<T extends State<any>> {
   abstract start: T
-  abstract end: T
+  abstract end: T | Array<T>
   wrap: Array<any> = []
 }
 
@@ -60,7 +60,7 @@ export class NFA extends FiniteAutomata<NFAState> {
 
 export class DFA extends FiniteAutomata<DFAState> {
   start = new DFAState(new EqualSet())
-  end = new DFAState(new EqualSet())
+  end: Array<DFAState> = []
 }
 
 export function closure(a: NFA): NFA {

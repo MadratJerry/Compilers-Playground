@@ -25,7 +25,7 @@ export function bfs<T extends Equal<T>, F extends FiniteAutomata<State<T>>>(
     const { start, end, wrap } = n
     _node(start)
     wrap.forEach(a => walk(a))
-    _node(end)
+    Array.isArray(end) ? end.forEach(e => _node(e)) : _node(end)
   }
   walk(f)
   return f
@@ -69,12 +69,12 @@ export function dfa(nfa: NFA) {
   for (const [T, toMap] of dTran) {
     T.label = `${id++}`
     if (T.id.has(nfa.start)) dfa.start = T
-    if (T.id.has(nfa.end)) dfa.end = T
+    if (T.id.has(nfa.end)) dfa.end.push(T)
     for (const [a, U] of toMap) {
       State.connect(T, U, a)
       const d = new DFA()
       d.start = T
-      d.end = U
+      d.end = [U]
       dfa.wrap.push(d)
     }
   }
