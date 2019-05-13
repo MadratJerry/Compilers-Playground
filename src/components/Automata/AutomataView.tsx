@@ -5,7 +5,12 @@ import { bfs, State, FiniteAutomata } from '@/lib/automata'
 import { Equal } from '@/lib/enhance'
 import './AutomataView.css'
 
-const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }) => {
+const AutomataView: React.SFC<{
+  fa: FiniteAutomata<any> | undefined
+  highlight?: Set<string>
+  onClick?: () => void
+  onFns?: Array<[string, (id: State<any>) => void]>
+}> = ({ fa, highlight = new Set(), onClick = () => {}, onFns = [] }) => {
   const svgRef = useRef<SVGSVGElement>(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
 
   useEffect(() => {
@@ -13,6 +18,7 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
       svgRef.current.innerHTML = `<g></g>`
       return
     }
+    const map: Map<string, State<any>> = new Map()
     const g = new dagreD3.graphlib.Graph({ multigraph: true })
     g.setGraph({ rankdir: 'LR', marginx: 20, marginy: 20 })
     g.graph().transition = selection => selection.transition().duration(500)
@@ -31,10 +37,11 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
       )
     }
 
-    bfs(fa, addEdge)
+    bfs(fa, addEdge, s => map.set(`${s}`, s))
     Array.isArray(fa.end)
       ? fa.end.forEach(e => g.setNode(`${e}`, { shape: 'doubleCircle' }))
       : g.setNode(`${fa.end}`, { shape: 'doubleCircle' })
+    highlight.forEach(n => g.setNode(n, { style: 'fill: yellow;', ...g.node(n) }))
 
     const svg = d3.select(svgRef.current),
       inner = svg.select('g'),
@@ -44,29 +51,32 @@ const AutomataView: React.SFC<{ fa: FiniteAutomata<any> | undefined }> = ({ fa }
 
     const render = new dagreD3.render()
     render.shapes().doubleCircle = function(parent, bbox, node) {
+      const { style } = node
       const r = Math.max(bbox.width, bbox.height) / 2
       const shapeSvg = parent.insert('g', ':first-child')
       shapeSvg
         .insert('circle', ':first-child')
         .attr('x', -bbox.width / 2)
         .attr('y', -bbox.height / 2)
-        .attr('r', r)
+        .attr('r', r - 3)
       shapeSvg
         .insert('circle', ':first-child')
         .attr('x', -bbox.width / 2)
         .attr('y', -bbox.height / 2)
-        .attr('r', r - 3)
+        .attr('r', r)
+        .attr('style', style)
 
-      node.intersect = function(point: any) {
-        return dagreD3.intersect.circle(node, r as any, point)
-      }
+      node.intersect = (point: any) => dagreD3.intersect.circle(node, r as any, point)
+
       return shapeSvg
     }
     // @ts-ignore
     svg.call(zoom)
     // @ts-ignore
     render(inner, g)
-  }, [fa])
+    svg.on('click', onClick)
+    onFns.forEach(([type, listener]) => svg.selectAll('g.node').on(type, id => listener(map.get(id as string)!)))
+  }, [fa, highlight])
   return (
     <svg width="100%" height="300" ref={svgRef} className="automata-view">
       <g />

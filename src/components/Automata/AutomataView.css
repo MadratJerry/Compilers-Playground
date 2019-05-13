@@ -14,5 +14,7 @@
 }
 
 .automata-view {
+  /*The whole elemnt can be the target for a pointer event, rather than the visible part*/
+  pointer-events: bounding-box;
   border: 1px solid #eee;
 }

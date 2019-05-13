@@ -8,12 +8,12 @@ export class Id extends Number implements Equal<Id> {
 }
 
 export class State<T extends Equal<T>> implements Equal<State<T>> {
-  public id?: T
+  public id: T
   public out: Set<[this, string]> = new Set()
   public label: string = ''
 
-  constructor(id?: T) {
-    if (id) this.id = id
+  constructor(id: T) {
+    this.id = id
   }
 
   public euqals(value?: this): boolean {
@@ -31,23 +31,9 @@ export class State<T extends Equal<T>> implements Equal<State<T>> {
 
 export class NFAState extends State<Id> {}
 
-export class DFAState extends State<EqualSet<NFAState>> {
-  id: EqualSet<NFAState>
+export class DFAState extends State<EqualSet<NFAState>> {}
 
-  constructor(id: EqualSet<NFAState>) {
-    super()
-    this.id = id
-  }
-}
-
-export class MFAState extends State<EqualSet<DFAState>> {
-  id: EqualSet<DFAState>
-
-  constructor(id: EqualSet<DFAState>) {
-    super()
-    this.id = id
-  }
-}
+export class MFAState extends State<EqualSet<DFAState>> {}
 
 export abstract class FiniteAutomata<T extends State<Equal<any>>> {
   abstract start: T
