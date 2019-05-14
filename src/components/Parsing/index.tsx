@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import MonacoEditor, { EditorDidMount, ChangeHandler } from 'react-monaco-editor'
 import * as monaco from 'monaco-editor'
 import { makeStyles, createStyles } from '@material-ui/styles'
@@ -30,6 +30,11 @@ const useStyles = makeStyles(() =>
   createStyles({
     container: {
       display: 'flex',
+      height: 600,
+    },
+    analysis: {
+      width: '70%',
+      overflow: 'scroll',
     },
     productionIndex: {
       margin: '0 4px',
@@ -51,10 +56,12 @@ const series = (start: number, end: number): Array<number> => {
 const production = (p: Production | undefined): string =>
   p ? `${p[0]} -> ${p[1].length ? p[1].join(' ') : epsilon}` : ``
 
-const ProductinoLink: React.SFC<{ index: number; className: string }> = ({ index, ...rest }) => (
-  <a href={`#production_${index}`} {...rest}>
-    {index}
-  </a>
+const ProductionLink = React.forwardRef<HTMLAnchorElement, { index: number; className: string }>(
+  ({ index, ...rest }, ref) => (
+    <a href={`#production_${index}`} {...rest} ref={ref}>
+      {index}
+    </a>
+  ),
 )
 
 const Parsing = () => {
@@ -62,12 +69,9 @@ const Parsing = () => {
   const [step, setStep] = useState(-1)
   const [error, setError] = useState('')
   const [grammar, setGrammar] = useState<LL1Grammar>()
-  let editor: monaco.editor.IEditor | null = null,
-    parser: LL1Parser | null = null
+  const editor = useRef<monaco.editor.ICodeEditor>({} as monaco.editor.ICodeEditor)
 
-  const handleEditorDidMount: EditorDidMount = e => (editor = e)
-
-  const handleResize = () => editor!.layout()
+  const handleEditorDidMount: EditorDidMount = e => (editor.current = e)
 
   const handleModelChange: ChangeHandler = value => {
     if (value === '') {
@@ -90,22 +94,19 @@ const Parsing = () => {
   }
 
   useEffect(() => {
+    const handleResize = () => editor.current.layout()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  if (grammar) parser = new LL1Parser(grammar)
+  const parser: LL1Parser | null = grammar ? new LL1Parser(grammar) : null
 
   return (
-    <div>
-      <Typography variant="h2" gutterBottom>
-        LL(1) Parsing
-      </Typography>
-
+    <>
       <Paper className={classes.container}>
         <MonacoEditor
-          width="50%"
-          height="300"
+          width="30%"
+          height="100%"
           language="plain"
           options={{
             lineNumbers: 'off',
@@ -114,140 +115,148 @@ const Parsing = () => {
           onChange={handleModelChange}
           editorDidMount={handleEditorDidMount}
         />
-        <Stepper activeStep={step} orientation="vertical">
-          {steps.map((t, i) => (
-            <Step key={i}>
-              <StepLabel
-                error={step === i}
-                optional={
-                  step === i ? (
-                    <Typography variant="caption" color="error">
-                      {error}
-                    </Typography>
-                  ) : null
-                }
-              >
-                {t}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Paper>
-
-      <Typography id="NonTerminals" variant="h3" gutterBottom>
-        Nonterminals
-      </Typography>
-      <Paper>
-        {grammar ? (
-          <List component="ul">
-            {[...grammar.nonTerminals.values()].sort().map(k => (
-              <ListItem key={k}>
-                <div>
-                  <Typography variant="h5" gutterBottom>
-                    {k}
-                  </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    First:
-                    {[
-                      ...grammar
-                        .firsts()
-                        .get(k)!
-                        .values(),
-                    ].join(' , ')}
-                  </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    Follow:
-                    {[
-                      ...grammar
-                        .follows()
-                        .get(k)!
-                        .values(),
-                    ].join(' , ')}
-                  </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    Productions:
-                    {series(...grammar.getProductionsIndex(k)!).map(i => (
-                      <ProductinoLink key={i} index={i} className={classes.productionIndex} />
-                    ))}
-                  </Typography>
-                </div>
-              </ListItem>
+        <div className={classes.analysis}>
+          <Typography id="NonTerminals" variant="h2" gutterBottom>
+            Analysis
+          </Typography>
+          <Typography id="NonTerminals" variant="h3" gutterBottom>
+            Sanity Checks
+          </Typography>
+          <Stepper activeStep={step} orientation="vertical">
+            {steps.map((t, i) => (
+              <Step key={i}>
+                <StepLabel
+                  error={step === i}
+                  optional={
+                    step === i ? (
+                      <Typography variant="caption" color="error">
+                        {error}
+                      </Typography>
+                    ) : null
+                  }
+                >
+                  {t}
+                </StepLabel>
+              </Step>
             ))}
-          </List>
-        ) : null}
-      </Paper>
+          </Stepper>
 
-      <Typography id="Productions" variant="h3" gutterBottom>
-        Productions
-      </Typography>
-      <Paper>
-        {grammar ? (
-          <List component="ul">
-            {grammar.getProductions().map((p, i) => (
-              <ListItem key={i} id={`production_${i}`}>
-                <Typography variant="h5" gutterBottom>
-                  {i}. {production(p)}
-                </Typography>
-              </ListItem>
-            ))}
-          </List>
-        ) : null}
-      </Paper>
-
-      <Typography id="PredictiveTable" variant="h3" gutterBottom>
-        Predictive Table
-      </Typography>
-      <Paper className={classes.tableContainer}>
-        {grammar ? (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                {[...grammar.terminals.values()].map(t => (
-                  <TableCell key={t} align="left">
-                    {t}
-                  </TableCell>
+          <Typography id="NonTerminals" variant="h3" gutterBottom>
+            Nonterminals
+          </Typography>
+          <div>
+            {grammar ? (
+              <List component="ul">
+                {[...grammar.nonTerminals().values()].sort().map(k => (
+                  <ListItem key={k}>
+                    <div>
+                      <Typography variant="h5" gutterBottom>
+                        {k}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        First:
+                        {[
+                          ...grammar
+                            .firsts()
+                            .get(k)!
+                            .values(),
+                        ].join(' , ')}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        Follow:
+                        {[
+                          ...grammar
+                            .follows()
+                            .get(k)!
+                            .values(),
+                        ].join(' , ')}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        Productions:
+                        {series(...grammar.getProductionsIndex(k)!).map(i => (
+                          <ProductionLink key={i} index={i} className={classes.productionIndex} />
+                        ))}
+                      </Typography>
+                    </div>
+                  </ListItem>
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[...grammar.nonTerminals.values()].map(n => (
-                <TableRow key={n}>
-                  <TableCell component="th" scope="row">
-                    {n}
-                  </TableCell>
-                  {[...grammar.terminals.values()].map(t => (
-                    <TableCell align="left" key={t}>
-                      <Tooltip
-                        title={production(
-                          grammar.getProductions()[
-                            parser!
-                              .getPredictiveTable()
-                              .get(n)!
-                              .get(t)!
-                          ],
-                        )}
-                        placement="top-start"
-                      >
-                        <ProductinoLink
-                          index={
-                            parser!
-                              .getPredictiveTable()
-                              .get(n)!
-                              .get(t)!
-                          }
-                          className={classes.productionIndex}
-                        />
-                      </Tooltip>
-                    </TableCell>
+              </List>
+            ) : null}
+          </div>
+
+          <Typography id="Productions" variant="h3" gutterBottom>
+            Productions
+          </Typography>
+          <div>
+            {grammar ? (
+              <List component="ul">
+                {grammar.getProductions().map((p, i) => (
+                  <ListItem key={i} id={`production_${i}`}>
+                    <Typography variant="h5" gutterBottom>
+                      {i}. {production(p)}
+                    </Typography>
+                  </ListItem>
+                ))}
+              </List>
+            ) : null}
+          </div>
+
+          <Typography id="PredictiveTable" variant="h3" gutterBottom>
+            Predictive Table
+          </Typography>
+          <div className={classes.tableContainer}>
+            {grammar ? (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell />
+                    {[...grammar.terminals().values()].map(t => (
+                      <TableCell key={t} align="left">
+                        {t}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[...grammar.nonTerminals().values()].map(n => (
+                    <TableRow key={n}>
+                      <TableCell component="th" scope="row">
+                        {n}
+                      </TableCell>
+                      {[...grammar.terminals().values()].map(t => (
+                        <TableCell align="left" key={t}>
+                          <Tooltip
+                            title={production(
+                              grammar.getProductions()[
+                                parser!
+                                  .getPredictiveTable()
+                                  .get(n)!
+                                  .get(t)!
+                              ],
+                            )}
+                            placement="top-start"
+                          >
+                            <ProductionLink
+                              index={
+                                parser!
+                                  .getPredictiveTable()
+                                  .get(n)!
+                                  .get(t)!
+                              }
+                              className={classes.productionIndex}
+                            />
+                          </Tooltip>
+                        </TableCell>
+                      ))}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : null}
+                </TableBody>
+              </Table>
+            ) : null}
+          </div>
+        </div>
       </Paper>
-    </div>
+    </>
   )
 }
 

@@ -30,7 +30,7 @@ export default () => {
     <>
       <Router>
         <Breadcrumbs />
-        <div style={{ margin: 48 }}>
+        <div style={{ margin: 32 }}>
           <Route exact path="/" component={Home} />
           {routes.map((route, i) => (
             <Route
