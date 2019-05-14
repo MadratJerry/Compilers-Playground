@@ -1,4 +1,4 @@
-import { Productions, IndexMap, ProductionsIndexMap, Alternative, Production, Symbol } from './grammarTypes'
+import { Productions, IndexMap, ProductionsIndexMap, Alternative, Production, Symbol, Firsts } from './grammarTypes'
 import { $end, $accept } from '.'
 
 export class Grammar {
@@ -8,6 +8,7 @@ export class Grammar {
   private readonly _terminals = new Set([$end])
   private readonly _nonTerminals = new Set([$accept])
   private readonly _nullables = new Set()
+  private readonly _firsts: Firsts = new Map()
 
   constructor(productions: Productions) {
     this._productions = productions.map(([symbol, alternative]) => this.addProduction(symbol, alternative))
@@ -22,6 +23,7 @@ export class Grammar {
     }
 
     this.computeNullables()
+    this.computeFirsts()
   }
 
   public getProductions(symbol?: Symbol): Productions {
@@ -65,6 +67,15 @@ export class Grammar {
     return this._nullables
   }
 
+  public first(symbol: Symbol): Set<Symbol> {
+    const set = this._firsts.get(symbol)
+    return new Set(set ? set : [])
+  }
+
+  public firsts(): Firsts {
+    return this._firsts
+  }
+
   protected getSymbolIndex(symbol: Symbol) {
     return this._indexMap.get(symbol)
   }
@@ -103,6 +114,47 @@ export class Grammar {
         }
         if (newValue !== this.nullable(n)) {
           this.nullables().add(n)
+          changed = true
+        }
+      }
+    } while (changed)
+  }
+
+  private computeFirsts() {
+    const FIRST = (symbol: Symbol | Alternative): Set<Symbol> => {
+      if (Array.isArray(symbol)) {
+        const [s, ...y] = symbol
+        const set = FIRST(s)
+        if (this.nullable(s)) {
+          FIRST(y).forEach(e => set.add(e))
+        }
+        return set
+      } else if (this.terminal(symbol)) return new Set([symbol])
+      else if (this.nonTerminal(symbol)) {
+        const set = this.first(symbol)
+        return set ? new Set(set) : new Set()
+      } else return new Set()
+    }
+
+    let changed
+    do {
+      changed = false
+      for (const n of this.nonTerminals()) {
+        const newValue = new Set()
+        for (const production of this.getProductions(n)) {
+          const [, alternative] = production
+          FIRST(alternative).forEach(s => newValue.add(s))
+        }
+
+        if (newValue.size !== this.first(n).size) {
+          this.firsts().set(n, newValue)
+          changed = true
+        }
+      }
+    } while (changed)
+  }
+        if (newValue.size !== this.first(n).size) {
+          this._firsts.set(n, newValue)
           changed = true
         }
       }
