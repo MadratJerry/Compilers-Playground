@@ -1,4 +1,4 @@
-import { epsilon, Follows, Productions, Symbol, symbolSet, Production } from '.'
+import { epsilon, Productions, symbolSet, Production } from '.'
 import { Grammar } from './grammar'
 
 export class LeftRecursionError extends Error {}
@@ -11,7 +11,6 @@ function intersection<T>(a: Set<T>, b: Set<T>) {
 
 export class LL1Grammar extends Grammar {
   [symbolSet] = new Set()
-  private readonly _follows: Follows = new Map()
 
   constructor(productions: Productions) {
     super(productions)
@@ -45,33 +44,6 @@ export class LL1Grammar extends Grammar {
           }
       }
     })
-  }
-
-  public follows(): Follows {
-    return this._follows
-  }
-
-  public follow(symbol: Symbol): Set<Symbol> {
-    const indexSet = this.getSymbolIndex(symbol)
-    const set = this._follows.get(symbol)
-    if (set) return set
-
-    const newSet = new Set()
-    if (indexSet) {
-      this._follows.set(symbol, newSet)
-      indexSet.forEach(([[s, a], i]) => {
-        const firstSet = this.first(a.slice(i + 1))
-        firstSet.delete(epsilon)
-        firstSet.forEach(s => newSet.add(s))
-      })
-      indexSet.forEach(([[s, a], i]) => {
-        const rest = a.slice(i + 1)
-        if ((rest.length === 0 || this.first(rest).has(epsilon)) && symbol !== s)
-          this.follow(s).forEach(s => newSet.add(s))
-      })
-    }
-
-    return newSet
   }
 
   private proudctionToString(p: Production): string {

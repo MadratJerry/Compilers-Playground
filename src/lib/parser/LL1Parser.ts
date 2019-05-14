@@ -17,8 +17,12 @@ export class LL1Parser {
       const firstSet = grammar.first(alternative)
       const add = (s: Symbol) => (grammar.terminal(s) ? this.addProduction(i, symbol, s) : null)
       firstSet.forEach(add)
-      if (firstSet.has(epsilon)) grammar.follow(symbol).forEach(add)
+      if (grammar.nullable(alternative)) grammar.follow(symbol).forEach(add)
     })
+  }
+
+  public getGrammar(): LL1Grammar {
+    return this._grammar
   }
 
   public getPredictiveTable(): PredictiveTable {

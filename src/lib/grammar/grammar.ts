@@ -1,4 +1,13 @@
-import { Productions, IndexMap, ProductionsIndexMap, Alternative, Production, Symbol, Firsts } from './grammarTypes'
+import {
+  Productions,
+  IndexMap,
+  ProductionsIndexMap,
+  Alternative,
+  Production,
+  Symbol,
+  Firsts,
+  Follows,
+} from './grammarTypes'
 import { $end, $accept } from '.'
 
 export class Grammar {
@@ -9,6 +18,7 @@ export class Grammar {
   private readonly _nonTerminals = new Set([$accept])
   private readonly _nullables = new Set()
   private readonly _firsts: Firsts = new Map()
+  private readonly _follows: Follows = new Map()
 
   constructor(productions: Productions) {
     this._productions = productions.map(([symbol, alternative]) => this.addProduction(symbol, alternative))
@@ -24,6 +34,7 @@ export class Grammar {
 
     this.computeNullables()
     this.computeFirsts()
+    this.computeFollows()
   }
 
   public getProductions(symbol?: Symbol): Productions {
@@ -58,26 +69,36 @@ export class Grammar {
   }
 
   public nullable(symbol: Symbol | Alternative): boolean {
-    if (Array.isArray(symbol)) {
-      return symbol.reduce((p, v) => this.nullable(v) && p, <boolean>true)
-    } else return this._nullables.has(symbol)
+    if (Array.isArray(symbol)) return this.NULLABLE(symbol)
+    return this.nullables().has(symbol)
   }
 
   public nullables(): Set<Symbol> {
     return this._nullables
   }
 
-  public first(symbol: Symbol): Set<Symbol> {
+  public first(symbol: Symbol | Alternative): Set<Symbol> {
+    if (Array.isArray(symbol)) return this.FIRST(symbol)
     const set = this._firsts.get(symbol)
-    return new Set(set ? set : [])
+    return new Set(set ? set : this.terminal(symbol) ? [symbol] : [])
   }
 
   public firsts(): Firsts {
     return this._firsts
   }
 
+  public follow(symbol: Symbol): Set<Symbol> {
+    const set = this._follows.get(symbol)
+    return set ? new Set(set) : new Set()
+  }
+
+  public follows(): Follows {
+    return this._follows
+  }
+
   protected getSymbolIndex(symbol: Symbol) {
-    return this._indexMap.get(symbol)
+    const set = this._indexMap.get(symbol)
+    return new Set(set ? set : [])
   }
 
   private addProduction(symbol: Symbol, alternative: Alternative): Production {
@@ -100,6 +121,12 @@ export class Grammar {
     }
   }
 
+  private NULLABLE(symbol: Symbol | Alternative): boolean {
+    if (Array.isArray(symbol)) {
+      return symbol.reduce((p, v) => this.nullable(v) && p, <boolean>true)
+    } else return this.nullable(symbol)
+  }
+
   private computeNullables() {
     // It's a fixed-point iteration
     let changed
@@ -109,7 +136,7 @@ export class Grammar {
         let newValue = false
         for (const production of this.getProductions(n)) {
           const [, alternative] = production
-          newValue = newValue || this.nullable(alternative)
+          newValue = newValue || this.NULLABLE(alternative)
           if (newValue) break
         }
         if (newValue !== this.nullable(n)) {
@@ -120,22 +147,22 @@ export class Grammar {
     } while (changed)
   }
 
-  private computeFirsts() {
-    const FIRST = (symbol: Symbol | Alternative): Set<Symbol> => {
-      if (Array.isArray(symbol)) {
-        const [s, ...y] = symbol
-        const set = FIRST(s)
-        if (this.nullable(s)) {
-          FIRST(y).forEach(e => set.add(e))
-        }
-        return set
-      } else if (this.terminal(symbol)) return new Set([symbol])
-      else if (this.nonTerminal(symbol)) {
-        const set = this.first(symbol)
-        return set ? new Set(set) : new Set()
-      } else return new Set()
-    }
+  private FIRST(symbol: Symbol | Alternative): Set<Symbol> {
+    if (Array.isArray(symbol)) {
+      const [s, ...y] = symbol
+      const set = this.FIRST(s)
+      if (this.nullable(s)) {
+        this.FIRST(y).forEach(e => set.add(e))
+      }
+      return set
+    } else if (this.terminal(symbol)) return new Set([symbol])
+    else if (this.nonTerminal(symbol)) {
+      const set = this.first(symbol)
+      return set ? new Set(set) : new Set()
+    } else return new Set()
+  }
 
+  private computeFirsts() {
     let changed
     do {
       changed = false
@@ -143,7 +170,7 @@ export class Grammar {
         const newValue = new Set()
         for (const production of this.getProductions(n)) {
           const [, alternative] = production
-          FIRST(alternative).forEach(s => newValue.add(s))
+          this.FIRST(alternative).forEach(s => newValue.add(s))
         }
 
         if (newValue.size !== this.first(n).size) {
@@ -153,8 +180,29 @@ export class Grammar {
       }
     } while (changed)
   }
-        if (newValue.size !== this.first(n).size) {
-          this._firsts.set(n, newValue)
+
+  private FOLLOW(symbol: Symbol | [Symbol, Alternative]): Set<Symbol> {
+    if (Array.isArray(symbol)) {
+      const [s, right] = symbol
+      const set = this.FIRST(right)
+      if (this.NULLABLE(right)) this.FOLLOW(s).forEach(e => set.add(e))
+      return set
+    } else return this.follow(symbol)
+  }
+
+  private computeFollows() {
+    let changed
+    do {
+      changed = false
+      for (const n of this.nonTerminals()) {
+        const newValue = new Set()
+
+        for (const [[s, a], i] of this.getSymbolIndex(n)) {
+          this.FOLLOW([s, a.slice(i + 1)]).forEach(e => newValue.add(e))
+        }
+
+        if (newValue.size !== this.follow(n).size) {
+          this._follows.set(n, newValue)
           changed = true
         }
       }
