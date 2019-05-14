@@ -15,7 +15,7 @@ export class LL1Parser {
     grammar.getProductions().forEach((production, i) => {
       const [symbol, alternative] = production
       const firstSet = grammar.first(alternative)
-      const add = (s: Symbol) => (grammar.terminals.has(s) ? this.addProduction(i, symbol, s) : null)
+      const add = (s: Symbol) => (grammar.terminal(s) ? this.addProduction(i, symbol, s) : null)
       firstSet.forEach(add)
       if (firstSet.has(epsilon)) grammar.follow(symbol).forEach(add)
     })
@@ -34,7 +34,7 @@ export class LL1Parser {
       const X: Symbol = stack[stack.length - 1].symbol as Symbol,
         token = tokens[index]
 
-      if (this._grammar.terminals.has(X)) {
+      if (this._grammar.terminal(X)) {
         if (X.match(stringRegex) ? token.token === X.slice(1, -1) : token.type === X) {
           stack[stack.length - 1].symbol = token
           stack.pop()

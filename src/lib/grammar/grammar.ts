@@ -5,8 +5,9 @@ export class Grammar {
   protected readonly _productions: Productions
   protected readonly _indexMap: IndexMap = new Map()
   protected readonly _productionsIndexMap: ProductionsIndexMap = new Map()
-  public readonly terminals = new Set([$end])
-  public readonly nonTerminals = new Set([$accept])
+  private readonly _terminals = new Set([$end])
+  private readonly _nonTerminals = new Set([$accept])
+  private readonly _nullables = new Set()
 
   constructor(productions: Productions) {
     this._productions = productions.map(([symbol, alternative]) => this.addProduction(symbol, alternative))
@@ -19,6 +20,8 @@ export class Grammar {
         last = i
       }
     }
+
+    this.computeNullables()
   }
 
   public getProductions(symbol?: Symbol): Productions {
@@ -36,6 +39,32 @@ export class Grammar {
     else return undefined
   }
 
+  public nonTerminals(): Set<Symbol> {
+    return this._nonTerminals
+  }
+
+  public nonTerminal(symbol: Symbol): boolean {
+    return this._nonTerminals.has(symbol)
+  }
+
+  public terminals(): Set<Symbol> {
+    return this._terminals
+  }
+
+  public terminal(symbol: Symbol): boolean {
+    return this._terminals.has(symbol)
+  }
+
+  public nullable(symbol: Symbol | Alternative): boolean {
+    if (Array.isArray(symbol)) {
+      return symbol.reduce((p, v) => this.nullable(v) && p, <boolean>true)
+    } else return this._nullables.has(symbol)
+  }
+
+  public nullables(): Set<Symbol> {
+    return this._nullables
+  }
+
   protected getSymbolIndex(symbol: Symbol) {
     return this._indexMap.get(symbol)
   }
@@ -43,14 +72,14 @@ export class Grammar {
   private addProduction(symbol: Symbol, alternative: Alternative): Production {
     if (alternative.length === 0) alternative = []
     const production: Production = [symbol, alternative]
-    this.nonTerminals.add(symbol)
-    this.terminals.delete(symbol)
+    this.nonTerminals().add(symbol)
+    this.terminals().delete(symbol)
     alternative.forEach((s, i) => this.addSymbolIndex(s, production, i))
     return production
   }
 
   private addSymbolIndex(symbol: Symbol, production: Production, index: number) {
-    if (!this.nonTerminals.has(symbol)) this.terminals.add(symbol)
+    if (!this.nonTerminal(symbol)) this.terminals().add(symbol)
 
     const indexSet = this._indexMap.get(symbol)
     if (indexSet) {
@@ -58,5 +87,25 @@ export class Grammar {
     } else {
       this._indexMap.set(symbol, new Set([[production, index]]))
     }
+  }
+
+  private computeNullables() {
+    // It's a fixed-point iteration
+    let changed
+    do {
+      changed = false
+      for (const n of this.nonTerminals()) {
+        let newValue = false
+        for (const production of this.getProductions(n)) {
+          const [, alternative] = production
+          newValue = newValue || this.nullable(alternative)
+          if (newValue) break
+        }
+        if (newValue !== this.nullable(n)) {
+          this.nullables().add(n)
+          changed = true
+        }
+      }
+    } while (changed)
   }
 }

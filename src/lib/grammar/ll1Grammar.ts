@@ -46,9 +46,9 @@ export class LL1Grammar extends Grammar {
   constructor(productions: Productions) {
     super(productions)
 
-    this.nonTerminals.forEach(s => this._firsts.set(s, this.first(s)) && this._follows.set(s, this.follow(s)))
+    this.nonTerminals().forEach(s => this._firsts.set(s, this.first(s)) && this._follows.set(s, this.follow(s)))
 
-    this.nonTerminals.forEach(s => {
+    this.nonTerminals().forEach(s => {
       const loc = this._productionsIndexMap.get(s)
       if (loc) {
         const [start, end] = loc
@@ -94,8 +94,8 @@ export class LL1Grammar extends Grammar {
       else return new Set([epsilon])
     }
 
-    if (this.terminals.has(symbol) || symbol === epsilon) return new Set([symbol])
-    else if (this.nonTerminals.has(symbol)) {
+    if (this.terminal(symbol) || symbol === epsilon) return new Set([symbol])
+    else if (this.nonTerminal(symbol)) {
       const set = this._firsts.get(symbol)
       if (set) return new Set(set)
 
