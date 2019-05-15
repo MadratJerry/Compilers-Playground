@@ -9,6 +9,11 @@ import {
   Follows,
 } from './grammarTypes'
 import { $end, $accept } from '.'
+import { difference } from '../enhance'
+
+export interface CheckResult {
+  unreachable: Set<Symbol>
+}
 
 export class Grammar {
   protected readonly _productions: Productions
@@ -19,10 +24,11 @@ export class Grammar {
   private readonly _nullables = new Set()
   private readonly _firsts: Firsts = new Map()
   private readonly _follows: Follows = new Map()
+  private readonly _checks: CheckResult
 
   constructor(productions: Productions) {
     this._productions = productions.map(([symbol, alternative]) => this.addProduction(symbol, alternative))
-    this._productions.push(this.addProduction($accept, [this._productions[0][0], $end]))
+    this._productions.push(this.addProduction($accept, productions.length ? [this._productions[0][0], $end] : [$end]))
     this._productions.sort()
 
     for (let i = 0, last = 0; i <= this._productions.length; i++) {
@@ -35,6 +41,7 @@ export class Grammar {
     this.computeNullables()
     this.computeFirsts()
     this.computeFollows()
+    this._checks = this.sanityCheck()
   }
 
   public getProductions(symbol?: Symbol): Productions {
@@ -53,7 +60,7 @@ export class Grammar {
   }
 
   public nonTerminals(): Set<Symbol> {
-    return this._nonTerminals
+    return new Set(this._nonTerminals)
   }
 
   public nonTerminal(symbol: Symbol): boolean {
@@ -61,7 +68,7 @@ export class Grammar {
   }
 
   public terminals(): Set<Symbol> {
-    return this._terminals
+    return new Set(this._terminals)
   }
 
   public terminal(symbol: Symbol): boolean {
@@ -70,11 +77,11 @@ export class Grammar {
 
   public nullable(symbol: Symbol | Alternative): boolean {
     if (Array.isArray(symbol)) return this.NULLABLE(symbol)
-    return this.nullables().has(symbol)
+    return this._nullables.has(symbol)
   }
 
   public nullables(): Set<Symbol> {
-    return this._nullables
+    return new Set(this._nullables)
   }
 
   public first(symbol: Symbol | Alternative): Set<Symbol> {
@@ -84,7 +91,7 @@ export class Grammar {
   }
 
   public firsts(): Firsts {
-    return this._firsts
+    return new Map(this._firsts)
   }
 
   public follow(symbol: Symbol): Set<Symbol> {
@@ -93,7 +100,11 @@ export class Grammar {
   }
 
   public follows(): Follows {
-    return this._follows
+    return new Map(this._follows)
+  }
+
+  public checks(): CheckResult {
+    return { ...this._checks }
   }
 
   protected getSymbolIndex(symbol: Symbol) {
@@ -104,14 +115,14 @@ export class Grammar {
   private addProduction(symbol: Symbol, alternative: Alternative): Production {
     if (alternative.length === 0) alternative = []
     const production: Production = [symbol, alternative]
-    this.nonTerminals().add(symbol)
-    this.terminals().delete(symbol)
+    this._nonTerminals.add(symbol)
+    this._terminals.delete(symbol)
     alternative.forEach((s, i) => this.addSymbolIndex(s, production, i))
     return production
   }
 
   private addSymbolIndex(symbol: Symbol, production: Production, index: number) {
-    if (!this.nonTerminal(symbol)) this.terminals().add(symbol)
+    if (!this.nonTerminal(symbol)) this._terminals.add(symbol)
 
     const indexSet = this._indexMap.get(symbol)
     if (indexSet) {
@@ -140,7 +151,7 @@ export class Grammar {
           if (newValue) break
         }
         if (newValue !== this.nullable(n)) {
-          this.nullables().add(n)
+          this._nullables.add(n)
           changed = true
         }
       }
@@ -174,7 +185,7 @@ export class Grammar {
         }
 
         if (newValue.size !== this.first(n).size) {
-          this.firsts().set(n, newValue)
+          this._firsts.set(n, newValue)
           changed = true
         }
       }
@@ -207,5 +218,30 @@ export class Grammar {
         }
       }
     } while (changed)
+  }
+
+  private sanityCheck(): CheckResult {
+    return {
+      unreachable: this.unreachable(),
+    }
+  }
+
+  private unreachable(): Set<Symbol> {
+    const visited: Set<Symbol> = new Set()
+    const stack: Array<Symbol> = [$accept]
+
+    while (stack.length) {
+      const top = stack.pop()!
+      visited.add(top)
+      for (const [, alternative] of this.getProductions(top)) {
+        for (const s of alternative) {
+          if (this.nonTerminal(s) && !visited.has(s)) {
+            stack.push(s)
+          }
+        }
+      }
+    }
+
+    return difference(this.nonTerminals(), visited)
   }
 }

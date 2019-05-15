@@ -1,13 +1,10 @@
+import { intersection } from '@/lib/enhance'
 import { epsilon, Productions, symbolSet, Production } from '.'
 import { Grammar } from './grammar'
 
 export class LeftRecursionError extends Error {}
 export class CommonPrefixError extends Error {}
 export class DanglingElseError extends Error {}
-
-function intersection<T>(a: Set<T>, b: Set<T>) {
-  return new Set([...a].filter(v => b.has(v)))
-}
 
 export class LL1Grammar extends Grammar {
   [symbolSet] = new Set()
