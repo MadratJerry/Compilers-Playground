@@ -1,3 +1,4 @@
+import { difference } from '@/lib/enhance'
 import {
   Productions,
   IndexMap,
@@ -9,10 +10,10 @@ import {
   Follows,
 } from './grammarTypes'
 import { $end, $accept } from '.'
-import { difference } from '../enhance'
 
 export interface CheckResult {
   unreachable: Set<Symbol>
+  unrealizable: Set<Symbol>
 }
 
 export class Grammar {
@@ -223,6 +224,7 @@ export class Grammar {
   private sanityCheck(): CheckResult {
     return {
       unreachable: this.unreachable(),
+      unrealizable: this.unrealizable(),
     }
   }
 
@@ -243,5 +245,25 @@ export class Grammar {
     }
 
     return difference(this.nonTerminals(), visited)
+  }
+
+  private unrealizable(): Set<Symbol> {
+    const marked: Set<Symbol> = new Set()
+
+    let changed
+    do {
+      changed = false
+      const rest = difference(this.nonTerminals(), marked)
+      for (const n of rest) {
+        for (const [, a] of this.getProductions(n)) {
+          if (a.reduce((p, c) => (p && this.nonTerminal(c) ? marked.has(c) : true), true)) {
+            marked.add(n)
+            changed = true
+          }
+        }
+      }
+    } while (changed)
+
+    return difference(this.nonTerminals(), marked)
   }
 }
