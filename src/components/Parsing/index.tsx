@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
+import classNames from 'classnames'
 import MonacoEditor, { EditorDidMount } from 'react-monaco-editor'
 import * as monaco from 'monaco-editor'
 import { makeStyles, createStyles } from '@material-ui/styles'
@@ -9,7 +10,7 @@ import Paper from '@material-ui/core/Paper'
 import { parse } from '@/lib/grammar/grammarParser'
 import { Grammar } from '@/lib/grammar'
 import { production } from './ProductionLink'
-import NonTerminalsTable from './NonTerminalsTable'
+import NonTerminalsTable, { set } from './NonTerminalsTable'
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -17,9 +18,16 @@ const useStyles = makeStyles(() =>
       display: 'flex',
       height: 600,
     },
+    editorContainer: {
+      width: '30%',
+    },
+    editorError: {
+      outline: '1px solid #f44336',
+    },
     analysis: {
       width: '70%',
       overflow: 'scroll',
+      padding: 4,
     },
     productionIndex: {
       margin: '0 4px',
@@ -59,18 +67,18 @@ const Parsing = () => {
   return (
     <>
       <Paper className={classes.container}>
-        <MonacoEditor
-          width="30%"
-          height="100%"
-          language="plain"
-          options={{
-            lineNumbers: 'off',
-            minimap: { enabled: false },
-          }}
-          onChange={useCallback(v => setValue(v), [])}
-          editorDidMount={handleEditorDidMount}
-          value={value}
-        />
+        <div className={classNames(classes.editorContainer, { [classes.editorError]: error !== '' })}>
+          <MonacoEditor
+            language="plain"
+            options={{
+              lineNumbers: 'off',
+              minimap: { enabled: false },
+            }}
+            onChange={useCallback(v => setValue(v), [])}
+            editorDidMount={handleEditorDidMount}
+            value={value}
+          />
+        </div>
         <div className={classes.analysis}>
           <Typography id="NonTerminals" variant="h2" gutterBottom>
             Analysis
@@ -78,6 +86,15 @@ const Parsing = () => {
           <Typography id="NonTerminals" variant="h3" gutterBottom>
             Sanity Checks
           </Typography>
+          {grammar ? (
+            <ul>
+              {grammar.checks().unreachable.size ? (
+                <li>The grammar has unreachable nonterminals: {set(grammar.checks().unreachable)}</li>
+              ) : (
+                <li>All nonterminals are reachable.</li>
+              )}
+            </ul>
+          ) : null}
 
           <Typography id="NonTerminals" variant="h3" gutterBottom>
             Nonterminals

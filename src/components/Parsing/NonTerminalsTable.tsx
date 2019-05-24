@@ -8,9 +8,9 @@ import Tooltip from '@material-ui/core/Tooltip'
 import { Grammar, Symbol } from '@/lib/grammar'
 import ProductionLink, { production } from './ProductionLink'
 
-const set = (s: Set<Symbol>) => (s.size ? [...s].join(' , ') : '∅')
+export const set = (s: Set<Symbol>) => (s.size ? [...s].join(' , ') : '∅')
 
-const series = (start: number, end: number): Array<number> => {
+export const series = (start: number, end: number): Array<number> => {
   const s = []
   for (; start < end; start++) s.push(start)
   return s
