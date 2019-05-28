@@ -1,14 +1,12 @@
 import { intersection } from '@/lib/enhance'
-import { epsilon, Productions, symbolSet, Production } from '.'
-import { Grammar } from './grammar'
+import { Productions, Production } from './grammarTypes'
+import { Grammar, epsilon } from './grammar'
 
 export class LeftRecursionError extends Error {}
 export class CommonPrefixError extends Error {}
 export class DanglingElseError extends Error {}
 
 export class LL1Grammar extends Grammar {
-  [symbolSet] = new Set()
-
   constructor(productions: Productions) {
     super(productions)
 

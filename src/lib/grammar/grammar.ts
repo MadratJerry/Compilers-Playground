@@ -1,4 +1,5 @@
 import { difference } from '@/lib/enhance'
+import { Vertex } from '@/lib/graph/vertex'
 import {
   Productions,
   IndexMap,
@@ -9,11 +10,17 @@ import {
   Firsts,
   Follows,
 } from './grammarTypes'
-import { $end, $accept } from '.'
+
+export const $accept = '$accept'
+export const $end = '$end'
+export const epsilon = 'ε'
+export const NonTerminal = 'NonTerminal'
+export const Terminal = 'Terminal'
 
 export interface CheckResult {
   unreachable: Set<Symbol>
   unrealizable: Set<Symbol>
+  cycle: Array<Symbol>
 }
 
 export class Grammar {
@@ -225,6 +232,7 @@ export class Grammar {
     return {
       unreachable: this.unreachable(),
       unrealizable: this.unrealizable(),
+      cycle: this.cyclic(),
     }
   }
 
@@ -265,5 +273,36 @@ export class Grammar {
     } while (changed)
 
     return difference(this.nonTerminals(), marked)
+  }
+
+  private cyclic(): Array<Symbol> {
+    const map: Map<Symbol, Vertex<Symbol>> = new Map()
+    this.nonTerminals().forEach(n => map.set(n, new Vertex(n)))
+
+    for (const n of this.nonTerminals()) {
+      for (const [, alternative] of this.getProductions(n)) {
+        if (this.nonTerminal(alternative[0]) && alternative.slice(1).reduce((p, c) => this.nullable(c), true))
+          Vertex.connect(map.get(n)!, map.get(alternative[0])!)
+      }
+    }
+
+    for (const n of this.nonTerminals()) {
+      const v = map.get(n)!
+      const stack: Array<Vertex<Symbol>> = []
+      const set: Set<Vertex<Symbol>> = new Set()
+      const dfs = (v: Vertex<Symbol>): boolean => {
+        stack.push(v)
+        set.add(v)
+        if (stack.length !== set.size) return false
+        for (const [to] of v.out) if (!dfs(to)) return false
+        set.delete(v)
+        stack.pop()
+        return true
+      }
+      dfs(v)
+      if (stack.length) return stack.map(v => v.value)
+    }
+
+    return []
   }
 }

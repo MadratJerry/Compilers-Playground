@@ -1,7 +1,7 @@
 import { Token, Monarch } from '@/lib/tokenizer'
 import { LL1Parser, IASTNode } from '@/lib/parser'
+import { $end, $accept } from './grammar'
 import { LL1Grammar } from './ll1Grammar'
-import { $end, $accept } from '.'
 import { Productions } from './grammarTypes'
 
 interface ASTNode extends IASTNode<ASTNode> {
