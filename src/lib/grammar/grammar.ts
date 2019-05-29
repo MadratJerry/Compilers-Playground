@@ -21,6 +21,7 @@ export interface CheckResult {
   unreachable: Set<Symbol>
   unrealizable: Set<Symbol>
   cycle: Array<Symbol>
+  nullAmbiguity: [Production, Production] | []
 }
 
 export class Grammar {
@@ -233,6 +234,7 @@ export class Grammar {
       unreachable: this.unreachable(),
       unrealizable: this.unrealizable(),
       cycle: this.cyclic(),
+      nullAmbiguity: this.nullAmbiguity(),
     }
   }
 
@@ -303,6 +305,19 @@ export class Grammar {
       if (stack.length) return stack.map(v => v.value)
     }
 
+    return []
+  }
+
+  private nullAmbiguity(): [Production, Production] | [] {
+    for (const n of this.nonTerminals()) {
+      const productions = this.getProductions(n)
+      for (let i = 0; i < productions.length; i++) {
+        if (this.nullable(productions[i][1])) {
+          for (let j = i + 1; j < productions.length; j++)
+            if (this.nullable(productions[j][1])) return [productions[i], productions[j]]
+        }
+      }
+    }
     return []
   }
 }

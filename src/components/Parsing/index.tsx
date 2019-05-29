@@ -41,7 +41,7 @@ const useStyles = makeStyles(() =>
 const Parsing = () => {
   const classes = useStyles()
   const [value, setValue] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [grammar, setGrammar] = useState<Grammar>()
   const editor = useRef<monaco.editor.ICodeEditor>({} as monaco.editor.ICodeEditor)
 
@@ -51,7 +51,7 @@ const Parsing = () => {
     try {
       const productions = parse(value)
       const grammar = new Grammar(productions)
-      setError('')
+      setError(null)
       setGrammar(grammar)
     } catch (e) {
       setError(e.message)
@@ -67,7 +67,7 @@ const Parsing = () => {
   return (
     <>
       <Paper className={classes.container}>
-        <div className={classNames(classes.editorContainer, { [classes.editorError]: error !== '' })}>
+        <div className={classNames(classes.editorContainer, { [classes.editorError]: error !== null })}>
           <MonacoEditor
             language="plain"
             options={{
@@ -89,9 +89,52 @@ const Parsing = () => {
           {grammar ? (
             <ul>
               {grammar.checks().unreachable.size ? (
-                <li>The grammar has unreachable nonterminals: {set(grammar.checks().unreachable)}</li>
+                <li>
+                  The grammar has unreachable nonterminals:
+                  <i>
+                    <strong>{set(grammar.checks().unreachable)}</strong>
+                  </i>
+                  .
+                </li>
               ) : (
                 <li>All nonterminals are reachable.</li>
+              )}
+              {grammar.checks().unrealizable.size ? (
+                <li>
+                  The grammar has unrealizable nonterminals:
+                  <i>
+                    <strong> {set(grammar.checks().unrealizable)} </strong>
+                  </i>
+                  .
+                </li>
+              ) : (
+                <li>All nonterminals are realizable.</li>
+              )}
+              {grammar.checks().cycle.length ? (
+                <li>
+                  The grammar is cyclic:
+                  <i>
+                    <strong> {grammar.checks().cycle.join(' -> ')} </strong>
+                  </i>
+                  is a cycle.
+                </li>
+              ) : (
+                <li>The grammar contains no cycles.</li>
+              )}
+              {grammar.checks().nullAmbiguity.length ? (
+                <li>
+                  contains a null ambiguity:
+                  <i>
+                    <strong> {production(grammar.checks().nullAmbiguity[0])} </strong>
+                  </i>
+                  and
+                  <i>
+                    <strong> {production(grammar.checks().nullAmbiguity[1])} </strong>
+                  </i>
+                  are ambiguously nullable.
+                </li>
+              ) : (
+                <li>The grammar is null unambiguous. </li>
               )}
             </ul>
           ) : null}

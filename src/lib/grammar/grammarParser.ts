@@ -11,7 +11,7 @@ interface ASTNode extends IASTNode<ASTNode> {
 const monarch = new Monarch({
   expressions: {},
   tokenizer: {
-    root: [[/".*?"/, 'string'], [/\w+'*/, 'symbol'], [/[:|;]/, 'operator'], [/[ \t\r\n]+/, 'white']],
+    root: [[/".*?"/, 'string'], [/\w+'*/, 'symbol'], [/[:|;]/, '$operator'], [/[ \t\r\n]+/, 'white']],
   },
 })
 
