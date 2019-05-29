@@ -1,4 +1,3 @@
-import { hot } from 'react-hot-loader'
 import React from 'react'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { createMuiTheme } from '@material-ui/core/styles'
@@ -16,4 +15,4 @@ const App = () => {
   )
 }
 
-export default (process.env.NODE_ENV === 'development' ? hot(module)(App) : App)
+export default App
