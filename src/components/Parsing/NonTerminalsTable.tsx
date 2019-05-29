@@ -5,8 +5,8 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
-import { Grammar, Symbol } from '@/lib/grammar'
-import ProductionLink, { production } from './ProductionLink'
+import { Grammar, Symbol, production } from '@/lib/grammar'
+import { ProductionLink } from './ProductionList'
 
 export const set = (s: Set<Symbol>) => (s.size ? [...s].join(' , ') : '∅')
 

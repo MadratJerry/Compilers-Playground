@@ -6,7 +6,8 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Tooltip from '@material-ui/core/Tooltip'
 import { LL1Parser } from '@/lib/parser'
-import ProductionLink, { production } from './ProductionLink'
+import { ProductionLink } from './ProductionList'
+import { production } from '@/lib/grammar'
 
 const LL1ParsingTable: React.SFC<{ parser: LL1Parser }> = ({ parser }) => {
   return (

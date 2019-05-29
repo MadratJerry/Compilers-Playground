@@ -6,11 +6,29 @@ export class LeftRecursionError extends Error {}
 export class CommonPrefixError extends Error {}
 export class DanglingElseError extends Error {}
 
-export class LL1Grammar extends Grammar {
-  constructor(productions: Productions) {
-    super(productions)
+export const production = (p: Production | undefined): string =>
+  p ? `${p[0]} -> ${p[1].length ? p[1].join(' ') : epsilon}` : ``
 
-    this.nonTerminals().forEach(s => {
+export class LL1Grammar extends Grammar {
+  private _error: Error | null
+
+  constructor(grammar: Grammar)
+  constructor(productions: Productions)
+  constructor(p: Productions | Grammar) {
+    if (p instanceof Grammar) {
+      const grammar = p
+      super([])
+      Object.assign(this, grammar)
+    } else super(p)
+    this._error = this.check()
+  }
+
+  public error(): Error | null {
+    return this._error
+  }
+
+  private check(): Error | null {
+    for (const s of this.nonTerminals()) {
       const loc = this._productionsIndexMap.get(s)
       if (loc) {
         const [start, end] = loc
@@ -19,29 +37,22 @@ export class LL1Grammar extends Grammar {
             const [pa, pb] = [this._productions[i], this._productions[j]]
             const [[, a], [, b]] = [pa, pb]
             if (intersection(this.first(a), this.first(b)).size > 0)
-              throw new CommonPrefixError(
-                `Grammars have common prefix, because FIRST(${this.proudctionToString(
-                  pa,
-                )}) and FIRST(${this.proudctionToString(pb)}) are not disjoint sets`,
-              )
-            if (this.first(a).has(epsilon) && intersection(this.first(b), this.follow(s)).size > 0)
-              throw new DanglingElseError(
-                `Grammars have dangling else, because FIRST(${this.proudctionToString(
+              return new CommonPrefixError(
+                `Grammars have common prefix, because FIRST(${production(pa)}) and FIRST(${production(
                   pb,
-                )}) and FOLLOW(${s}) are not disjoint sets`,
+                )}) are not disjoint sets.`,
               )
-            if (this.first(b).has(epsilon) && intersection(this.first(a), this.follow(s)).size > 0)
-              throw new DanglingElseError(
-                `Grammars have dangling else, because FIRST(${this.proudctionToString(
-                  pa,
-                )}) and FOLLOW(${s}) are not disjoint sets`,
+            if (this.nullable(a) && intersection(this.first(b), this.follow(s)).size > 0)
+              return new DanglingElseError(
+                `Grammars have dangling else, because FIRST(${production(pb)}) and FOLLOW(${s}) are not disjoint sets.`,
+              )
+            if (this.nullable(b) && intersection(this.first(a), this.follow(s)).size > 0)
+              return new DanglingElseError(
+                `Grammars have dangling else, because FIRST(${production(pa)}) and FOLLOW(${s}) are not disjoint sets.`,
               )
           }
       }
-    })
-  }
-
-  private proudctionToString(p: Production): string {
-    return `${p[0]} -> ${p[1].join(' ')}`
+    }
+    return null
   }
 }
