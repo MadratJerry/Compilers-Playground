@@ -2,7 +2,7 @@ import { LL1Grammar, epsilon, $accept, $end, Symbol, NonTerminal, Terminal, Gram
 import { Token } from '@/lib/tokenizer'
 import { ASTNode } from './ASTNode'
 
-type PredictiveTable = Map<Symbol, Map<Symbol, number>>
+type PredictiveTable = Map<Symbol, Map<Symbol, Array<number>>>
 
 const stringRegex = /"(.*)"/
 
@@ -26,7 +26,26 @@ export class LL1Parser {
   }
 
   public getPredictiveTable(): PredictiveTable {
-    return this._predictiveTable
+    // TODO: Can create an abstract method
+    return new Proxy(this._predictiveTable, {
+      get(target, p) {
+        if (p === 'get')
+          return (key: Symbol) => {
+            const value = target.get(key)
+            return new Proxy(value !== undefined ? value : new Map(), {
+              get(target, p) {
+                if (p === 'get')
+                  return (key: Symbol) => {
+                    const value = target.get(key)
+                    return value !== undefined ? value : []
+                  }
+                return target[p]
+              },
+            })
+          }
+        return target[p]
+      },
+    })
   }
 
   public parse(tokens: Token[]): ASTNode {
@@ -48,10 +67,11 @@ export class LL1Parser {
         throw new Error('Unexpected grammar')
       } else {
         const productions = this._grammar.getProductions()
+        // Always choose the first production
         const production =
           this.getM(X, token.type) === undefined
-            ? productions[this.getM(X, `"${token.token}"`)!]
-            : productions[this.getM(X, token.type)!]
+            ? productions[this.getM(X, `"${token.token}"`)![0]]
+            : productions[this.getM(X, token.type)![0]]
         const [, alternative] = production
         const top = stack.pop()!
         top.children = alternative.map(s => new ASTNode(s, top))
@@ -62,7 +82,7 @@ export class LL1Parser {
     return root
   }
 
-  private getM(nonTerminal: Symbol, terminal: Symbol): number | undefined {
+  private getM(nonTerminal: Symbol, terminal: Symbol): Array<number> | undefined {
     const tMap = this._predictiveTable.get(nonTerminal)
     if (tMap) {
       return tMap.get(terminal)
@@ -75,7 +95,7 @@ export class LL1Parser {
       tMap = new Map()
       this._predictiveTable.set(nonTerminal, tMap)
     }
-    if (tMap.has(terminal)) throw new Error(`M[${nonTerminal}, ${terminal}] can only be one item`)
-    tMap.set(terminal, index)
+    if (tMap.has(terminal)) tMap.get(terminal)!.push(index)
+    else tMap.set(terminal, [index])
   }
 }
