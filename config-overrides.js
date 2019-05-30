@@ -3,7 +3,8 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 
 module.exports = module.exports = {
   webpack: function(config) {
-    config.plugins.push(new MonacoWebpackPlugin())
+    // FIXME: If add typescript, codesandbox will kill the process(may be out of memory)
+    config.plugins.push(new MonacoWebpackPlugin({ languages: ['javascript'] }))
     config.resolve = {
       ...config.resolve,
       alias: { '@': path.resolve(__dirname, 'src') },
