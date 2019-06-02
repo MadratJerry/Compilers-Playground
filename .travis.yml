@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+  - '10'
+env:
+  global:
+    - NODE_ENV=production
+jobs:
+  include:
+    - state: Test
+      script: yarn test
+    - stage: Build
+      script: yarn build
+    - stage: Deploy
+      script: yarn build
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: $GITHUB_TOKEN
+        local_dir: build
+        keep_history: true
+        on:
+          branch: master
+          tags: true
