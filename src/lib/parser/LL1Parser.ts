@@ -27,7 +27,8 @@ export class LL1Parser {
 
   public getPredictiveTable(): PredictiveTable {
     // TODO: Can create an abstract method
-    return new Proxy(this._predictiveTable, {
+    const table = this._predictiveTable
+    return new Proxy(table, {
       get(target, p) {
         if (p === 'get')
           return (key: Symbol) => {
@@ -43,7 +44,7 @@ export class LL1Parser {
               },
             })
           }
-        return target[p]
+        return target[p] instanceof Function ? target[p].bind(table) : target[p]
       },
     })
   }

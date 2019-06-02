@@ -15,14 +15,13 @@ test('LL1 Grammars test', () => {
       ['F', '"("', 'id'],
       ['T', '"("', 'id'],
       ['E', '"("', 'id'],
-      [`E'`, '"+"', epsilon],
-      [`T'`, '"*"', epsilon],
+      [`E'`, '"+"'],
+      [`T'`, '"*"'],
     ]),
   )
 
   expect(sort(expand(grammars.follows()))).toEqual(
     sort([
-      [$accept],
       ['F', $end, '")"', '"+"', '"*"'],
       ['T', $end, '")"', '"+"'],
       ['E', $end, '")"'],
@@ -33,13 +32,13 @@ test('LL1 Grammars test', () => {
 })
 
 test('LL1 Grammars test case 2', () => {
-  expect(() => new LL1Grammar(case2)).toThrow(LeftRecursionError)
+  expect(new LL1Grammar(case2).error()).toBeInstanceOf(LeftRecursionError)
 })
 
 test('LL1 Grammars test case 3', () => {
-  expect(() => new LL1Grammar(case3)).toThrow(DanglingElseError)
+  expect(new LL1Grammar(case3).error()).toBeInstanceOf(DanglingElseError)
 })
 
 test('LL1 Grammars test case 4', () => {
-  expect(() => new LL1Grammar(case4)).toThrow(CommonPrefixError)
+  expect(new LL1Grammar(case4).error()).toBeInstanceOf(CommonPrefixError)
 })

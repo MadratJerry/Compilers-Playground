@@ -17,16 +17,14 @@ function dfs(node: ASTNode): string {
 
 test('LL1 Parser test case 1', () => {
   const parser = new LL1Parser(new LL1Grammar(case1))
-  expect(parser.getPredictiveTable()).toEqual(
-    new Map([
-      [$accept, new Map([['"("', 0], ['id', 0]])],
-      [`E'`, new Map([[`"+"`, 2], ['")"', 1], [$end, 1]])],
-      [`E`, new Map([[`"("`, 3], ['id', 3]])],
-      [`F`, new Map([[`"("`, 4], ['id', 5]])],
-      [`T'`, new Map([[`"*"`, 7], ['"+"', 6], ['")"', 6], [$end, 6]])],
-      [`T`, new Map([[`"("`, 8], ['id', 8]])],
-    ]),
-  )
+  expect([...parser.getPredictiveTable().entries()]).toEqual([
+    [$accept, new Map([['"("', [0]], ['id', [0]]])],
+    [`E'`, new Map([[`"+"`, [2]], ['")"', [1]], [$end, [1]]])],
+    [`E`, new Map([[`"("`, [3]], ['id', [3]]])],
+    [`F`, new Map([[`"("`, [4]], ['id', [5]]])],
+    [`T'`, new Map([[`"*"`, [7]], ['"+"', [6]], ['")"', [6]], [$end, [6]]])],
+    [`T`, new Map([[`"("`, [8]], ['id', [8]]])],
+  ])
 
   const ast = parser.parse([
     new Token(0, 'a', 'id'),
